@@ -1,0 +1,13 @@
+.DS_Store
+.Rhistory
+.Rproj.user
+
+data/*
+!data/clean
+data/clean/*
+!/data/clean/combined
+documents
+outputs
+saved_models
+scripts
+stan_models
