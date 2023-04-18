@@ -10,4 +10,5 @@ documents
 outputs
 saved_models
 scripts
-stan_models
+stan_models/*
+!stan_models/*.stan
