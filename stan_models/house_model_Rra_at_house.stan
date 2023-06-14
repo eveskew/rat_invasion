@@ -1,4 +1,4 @@
-// A Poisson regression with effect of Rra_at_site and varying intercepts 
+// A Poisson regression with effect of Rra_at_house and varying intercepts 
 // by site and house, to be used with house-level data
 
 data {
@@ -6,7 +6,7 @@ data {
   int<lower=0> N;
   
   array[N] int n_Mna;
-  array[N] int Rra_at_site;
+  array[N] int Rra_at_house;
   array[N] real log_tot_traps;
   
   int<lower=0> N_site;
@@ -57,7 +57,7 @@ model {
   
   for (i in 1:N) {
     
-    lambda[i] = a + bR * Rra_at_site[i] + a_site[site[i]] + a_house[house[i]] + log_tot_traps[i];
+    lambda[i] = a + bR * Rra_at_house[i] + a_site[site[i]] + a_house[house[i]] + log_tot_traps[i];
     n_Mna[i] ~ poisson_log(lambda[i]);
   }
 }
@@ -80,6 +80,6 @@ generated quantities {
   
   for (i in 1:N) {
     
-    lambda[i] = a + bR * Rra_at_site[i] + a_site[site[i]] + a_house[house[i]];
+    lambda[i] = a + bR * Rra_at_house[i] + a_site[site[i]] + a_house[house[i]];
   }
 }

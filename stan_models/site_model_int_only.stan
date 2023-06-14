@@ -18,7 +18,7 @@ model {
   
   vector[N] lambda;
   
-  a ~ normal(-2, 1);
+  a ~ normal(-3.1, 1.1);
   
   for (i in 1:N) {
     
