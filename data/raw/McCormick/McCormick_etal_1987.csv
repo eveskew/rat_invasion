@@ -1,0 +1,12 @@
+﻿village,sl_region,n_Mna,n_rodent_total,avg_Mna_per_house,longitude,latitude,location_confidence,notes
+Niahun,east,405,807,3.2,-10.93951,8.06493,confident,
+Konia,east,414,684,1.6,-10.403933,8.209808,uncertain,Google Maps will located Konia in the middle of a forested region; don't think that's the village in question
+Kpandebu,east,76,799,1.9,-11.382038,7.84555,uncertain,"This is presumably not the ""Kpandebu"" in the southern province; I think it may now be one of the two ""Kpandobu""s in the eastern province"
+Tongola,east,67,433,1.7,-11.05095,8.21114,confident,
+Lalehun,east,161,179,4,-11.08119,8.19751,confident,
+Palima,east,56,256,1.4,-11.33124,8.09407,confident,
+Giehun,east,131,436,3.3,-10.64654,8.20287,uncertain,"There are multiple other ""Giehun""s; but all in the southern province?"
+Landoma,east,52,335,1.3,-11.05111,8.23608,uncertain,"Multiple internet resources indicate this is a village, but appears to be more an outskirt of Tongola/Tokbombu/Gehama?"
+Lowoma,east,35,91,0.9,-10.99008,8.21985,confident,
+Geliama,east,103,138,2.6,-11.05772,8.22196,uncertain,"An alternative spelling ""Gehama""?; if so, then we're confident"
+Giema,east,69,161,1.7,-11.142272,7.775127,uncertain,"Another Giema comes up on Google Maps, but it's in the middle of a forested area"

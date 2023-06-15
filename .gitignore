@@ -2,10 +2,10 @@
 .Rhistory
 .Rproj.user
 
-data/*
-!data/clean
-data/clean/*
-!/data/clean/combined
+data/clean/PREEMPT
+data/GBIF
+data/raw/EFC
+data/raw/PREEMPT
 documents
 outputs
 saved_models
