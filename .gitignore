@@ -7,7 +7,7 @@ data/GBIF
 data/raw/EFC
 data/raw/PREEMPT
 documents
-outputs
+outputs/misc
 saved_models
 scripts
 stan_models/*
