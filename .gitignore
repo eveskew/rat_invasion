@@ -2,6 +2,7 @@
 .Rhistory
 .Rproj.user
 
+data/clean/EFC
 data/clean/PREEMPT
 data/GBIF
 data/raw/EFC
@@ -9,6 +10,7 @@ data/raw/PREEMPT
 documents
 outputs/misc
 saved_models
-scripts
-stan_models/*
+scripts/archive
+scripts/scraps.R
+stan_models
 !stan_models/*.stan

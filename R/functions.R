@@ -17,3 +17,24 @@ precis_plot <- function( x , y , pars , col.ci="black" , xlab="Value" , add=FALS
   if ( add==FALSE ) abline( v=0 , lty=1 , col=col.alpha("black",0.15) )
 }
 setMethod( "plot" , "precis" , function(x,y,...) precis_plot(x,y,...) )
+
+
+# Function to clean latitude/longitude coordinates from EFC dataset 
+get.decimal.coord <- function(coord){
+  # Some entries have elevation after a comma
+  coord = strsplit(coord, ",")[[1]][1]
+  coord = strsplit(coord, ';')[[1]]
+  dec.coord <- c(NA, NA)
+  if(length(coord)==2){
+    for(i in 1:2){
+      s1 = strsplit(coord[i], "°")[[1]]
+      s2 = strsplit(s1[2], "'")[[1]]
+      s3 = strsplit(s2[2], "\"")[[1]]
+      c1 = as.numeric(s1[1])
+      c2 = as.numeric(s2[1])
+      c3 = as.numeric(s3[1])
+      dec.coord[i] <- c1 + c2/60 + c3/3600
+    }
+  }
+  return(dec.coord)
+}
