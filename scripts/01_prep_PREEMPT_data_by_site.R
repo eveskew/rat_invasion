@@ -18,15 +18,14 @@
 ## 3. Trap shapefiles
 ## "data/raw/PREEMPT/shapefiles"
 ## layers "Houses_Lassa_5Cycles" (House traps) and "Transects_traps_5cycles"
-## (InTown and OutTown sites). These data are used to fill in
+## (InTown and OutTown traps). These data are used to fill in
 ## latitude and longitude coordinates for each rodent captured. 
 
-## Output is written to "data/clean/PREEMPT/Aggregated_PREEMPT_Capture_Data.csv" 
+## Output is written to "data/clean/PREEMPT/aggregated_PREEMPT_capture_data.csv" 
 
 
 library(tidyverse)
-library(rgdal)
-library(readxl)
+library(sf)
 library(assertthat)
 
 #==============================================================================
@@ -35,27 +34,22 @@ library(assertthat)
 # Read in trap shapefiles, convert both to data frames, combine
 
 # House trap shapefile
-housetrap.shp <- readOGR(
+housetrap.shp <- read_sf(
   dsn = "data/raw/PREEMPT/shapefiles/", 
-  layer = "Houses_Lassa_5Cycles",
-  verbose = FALSE
+  layer = "Houses_Lassa_5Cycles"
 )
 
 # Transect trap shapefile
-trantrap.shp <- readOGR(
+trantrap.shp <- read_sf(
   dsn = "data/raw/PREEMPT/shapefiles/", 
-  layer = "Transects_traps_5cycles",
-  verbose = FALSE
+  layer = "Transects_traps_5cycles"
 )
 
 # Convert house trap shapefile to data frame for ease of processing
 housetrap.dat <- housetrap.shp %>%
-  as.data.frame() %>%
-  rename(
-    longitude = coords.x1,
-    latitude = coords.x2
-  ) %>%
   mutate(
+    longitude = st_coordinates(.)[,1],
+    latitude = st_coordinates(.)[,2],
     Visit = as.numeric(Visit),
     # change "H01" style "Track_ID" entries to "H1" style
     Track_ID = str_replace_all(Track_ID, "H0", "H")
@@ -63,6 +57,7 @@ housetrap.dat <- housetrap.shp %>%
   # the "Lat" and "Long" columns are sometimes missing, so use the coordinate
   # values for every entry
   select(-Lat, -Long) %>%
+  st_drop_geometry() %>%
   arrange(Town, Visit)
 
 colnames(housetrap.dat) <- tolower(colnames(housetrap.dat))
@@ -106,14 +101,14 @@ housetrap.dat %>%
 
 # Convert transect trap shapefile to data frame for ease of processing
 trantrap.dat <- trantrap.shp %>%
-  as.data.frame() %>%
-  rename(
-    longitude = coords.x1,
-    latitude = coords.x2
+  mutate(
+    longitude = st_coordinates(.)[,1],
+    latitude = st_coordinates(.)[,2]
   ) %>%
   # the "Lat" and "Long" columns are sometimes missing, so use the coordinate
   # values for every entry
   select(-Rat_catch, -Lassa_pos, -Lat, -Long) %>%
+  st_drop_geometry() %>%
   arrange(Town, Visit, Trap_ID)
 
 colnames(trantrap.dat) <- tolower(colnames(trantrap.dat))
@@ -160,7 +155,7 @@ trap.coordinates <- plyr::rbind.fill(housetrap.dat, trantrap.dat) %>%
 
 # Read in and process rodent capture data
 
-capture.dat <- read_excel(
+capture.dat <- readxl::read_excel(
   "data/raw/PREEMPT/trapping/PREEMPT Master Template.xlsx",
   sheet = 4
 ) %>%
@@ -208,13 +203,53 @@ capture.dat[capture.dat$animal_id == 34, "track_id"] <- "OT2"
 
 # capture.dat contains rodent capture data from PREDICT project. These data
 # do not contain trap location information nor trapping effort, so they are
-# not included
+# not included in downstream analyses
 # PREDICT sites have "track_id" that does not start with a letter or is missing
 predict.sites <- is.na(capture.dat$track_id) | !is.na(as.numeric(capture.dat$track_id))
 capture.dat <- capture.dat[!predict.sites, ]
 
 # Confirm that all records have "visit" information following this filtering
 assert_that(sum(is.na(capture.dat$visit)) == 0)
+
+
+# Use "trap.coordinates" coordinates to fill in "capture.dat" lat/long
+
+# Join in non-house traps first
+capture.dat.mod <- capture.dat %>%
+  left_join(
+    .,
+    trap.coordinates %>%
+      filter(habitat_code != "H") %>%
+      select(site, visit, track_id, trap_id, longitude, latitude),
+    by = c("site", "visit", "track_id", "trap_id")
+  )
+
+# Then join in house traps, combining the two resulting lat/long columns
+capture.dat.mod <- capture.dat.mod %>%
+  left_join(
+    .,
+    trap.coordinates %>%
+      filter(habitat_code == "H") %>%
+      select(site, visit, track_id, longitude, latitude),
+    by = c("site", "visit", "track_id")
+  ) %>%
+  rename(
+    longitude = longitude.x,
+    latitude = latitude.x
+  ) %>%
+  mutate(
+    longitude = ifelse(is.na(longitude), longitude.y, longitude),
+    latitude = ifelse(is.na(latitude), latitude.y, latitude)
+  ) %>%
+  select(-longitude.y, -latitude.y)
+
+# Verify the two data frames have matching numbers of rows
+assert_that(nrow(capture.dat) == nrow(capture.dat.mod))
+# Verify that all records have been assigned lat/long
+assert_that(sum(is.na(capture.dat.mod$latitude)) == 0)
+assert_that(sum(is.na(capture.dat.mod$longitude)) == 0)
+
+#==============================================================================
 
 
 # Load in and process trapping data
@@ -226,7 +261,7 @@ summary.trap.dat <- c()
 site.names <- unique(capture.dat$site)
 for(site in site.names) {
   
-    trap.dat.sheet <- read_excel(
+    trap.dat.sheet <- readxl::read_excel(
       path = "data/raw/PREEMPT/trapping/Reshaped PREEMPT Trap Estimates.v6.xlsx",
       sheet = site,
       na = c("", "NA")
@@ -306,46 +341,6 @@ write_csv(summary.trap.dat, "data/clean/PREEMPT/trap_metadata.csv")
 #==============================================================================
 
 
-# Use "trap.coordinates" coordinates to fill in "capture.dat" lat/long
-
-# Join in non-house traps first
-capture.dat.mod <- capture.dat %>%
-  left_join(
-    .,
-    trap.coordinates %>%
-      filter(habitat_code != "H") %>%
-      select(site, visit, track_id, trap_id, longitude, latitude),
-    by = c("site", "visit", "track_id", "trap_id")
-  )
-
-# Then join in house traps, combining the two resulting lat/long columns
-capture.dat.mod <- capture.dat.mod %>%
-  left_join(
-    .,
-    trap.coordinates %>%
-      filter(habitat_code == "H") %>%
-      select(site, visit, track_id, longitude, latitude),
-    by = c("site", "visit", "track_id")
-  ) %>%
-  rename(
-    longitude = longitude.x,
-    latitude = latitude.x
-  ) %>%
-  mutate(
-    longitude = ifelse(is.na(longitude), longitude.y, longitude),
-    latitude = ifelse(is.na(latitude), latitude.y, latitude)
-  ) %>%
-  select(-longitude.y, -latitude.y)
-
-# Verify the two data frames have matching numbers of rows
-assert_that(nrow(capture.dat) == nrow(capture.dat.mod))
-# Verify that all records have been assigned lat/long
-assert_that(sum(is.na(capture.dat.mod$latitude)) == 0)
-assert_that(sum(is.na(capture.dat.mod$longitude)) == 0)
-
-#==============================================================================
-
-
 # Aggregate and combine trap summary data and trap coordinates data frame
 
 # Aggregate trap coordinates over site
@@ -391,8 +386,6 @@ agg.capture <- capture.dat.mod %>%
   ) %>%
   ungroup()
 
-#==============================================================================
-
 
 # Merge aggregated trap summary data and aggregated capture data
 
@@ -410,7 +403,7 @@ all.agg.trap.capture %>%
   summarize(n_visits = n())
 
 
-# Write filled-in version of "capture.dat" (has lat/long, has correct ID's) 
+# Write filled-in version of "capture.dat" (has lat/long, has correct IDs) 
 write_csv(capture.dat.mod, "data/clean/PREEMPT/PREEMPT_capture_data.csv")
 
 # Write data frame that aggregates summary trap data, capture data, and trap shapefiles
