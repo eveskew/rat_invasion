@@ -2,6 +2,7 @@ library(tidyverse)
 library(rnaturalearth)
 library(rnaturalearthdata)
 library(sf)
+library(assertthat)
 
 # The goal of this script is to combine rodent trapping data from Sierra Leone
 # and Guinea, saving intermediate data files to "data/clean/combined"
@@ -14,12 +15,56 @@ library(sf)
 
 # Data on track-level trapping effort across all sites
 summary.trap.dat <- read_csv("data/clean/PREEMPT/trap_metadata.csv") %>%
-  select(-mastomys, -house_type)
+  mutate(
+    # visit 5 at Petema is coded with two dates two days apart, recode to have
+    # the same visit date
+    date_mod = ifelse(
+      site == "Petema" & as.character(date) == "2021-01-28",
+      "2021-01-26",
+      as.character(date)
+    ),
+    # visit 2 at Badala is coded in the incorrect year, recode
+    date_mod = ifelse(
+      site == "Badala" & visit == 2,
+      "2019-11-09",
+      date_mod
+    ),
+    date_mod = as.Date(date_mod)
+  ) %>%
+  select(-mastomys, -house_type, -date) %>%
+  rename(date = date_mod) %>%
+  relocate(date, everything())
+
 # Data on rodent captures across all sites
 capture.dat <- read_csv("data/clean/PREEMPT/PREEMPT_capture_data.csv")
+
 # Summarized data on rodent capture at all sites: needed for site-level
 # lat/long information
 agg <- read_csv("data/clean/PREEMPT/aggregated_PREEMPT_capture_data.csv")
+
+#==============================================================================
+
+
+# Combine PREEMPT capture data with EFC data to see how many total captures 
+# there were of each species in each country
+
+capture.dat %>%
+  select(species) %>%
+  rename(Species_ID = species) %>%
+  mutate(
+    Tot = rep(1, nrow(.)),
+    Country = rep("Sierra Leone", nrow(.))) %>%
+  rbind(
+    .,
+    read_csv("data/clean/EFC/Aggregated_EFC_Capture_Data.csv") %>%
+      select(Species_ID, Country, Tot)
+  ) %>%
+  group_by(Species_ID, Country) %>%
+  summarize(n = sum(Tot)) %>%
+  ungroup() %>%
+  tidyr::pivot_wider(names_from = "Country", values_from = "n", values_fill = 0) %>%
+  mutate(n_total = Guinea + `Sierra Leone`) %>%
+  arrange(desc(n_total))
 
 #==============================================================================
 
@@ -32,12 +77,18 @@ capture.dat.by.track <- capture.dat %>%
   summarize(
     n_catch = n(),
     n_Mna = sum(sp == "Mna"),
-    n_Rra = sum(sp == "Rra")
+    n_Rra = sum(sp == "Rra"),
+    n_Mer = sum(sp == "Mer"),
+    n_Pda = sum(sp == "Pda"),
+    n_Pro = sum(sp == "Pro")
   ) %>%
   ungroup()
 
 sum(capture.dat.by.track$n_Mna)
 sum(capture.dat.by.track$n_Rra)
+sum(capture.dat.by.track$n_Mer)
+sum(capture.dat.by.track$n_Pda)
+sum(capture.dat.by.track$n_Pro)
 
 # Join summarized capture data in with track-level trap data
 track.level.captures <- summary.trap.dat %>%
@@ -47,11 +98,17 @@ track.level.captures <- summary.trap.dat %>%
   ) %>%
   mutate(
     n_Mna = ifelse(is.na(n_Mna), 0, n_Mna),
-    n_Rra = ifelse(is.na(n_Rra), 0, n_Rra)
+    n_Rra = ifelse(is.na(n_Rra), 0, n_Rra),
+    n_Mer = ifelse(is.na(n_Mer), 0, n_Mer),
+    n_Pda = ifelse(is.na(n_Pda), 0, n_Pda),
+    n_Pro = ifelse(is.na(n_Pro), 0, n_Pro)
   )
 
 sum(track.level.captures$n_Mna)
 sum(track.level.captures$n_Rra)
+sum(track.level.captures$n_Mer)
+sum(track.level.captures$n_Pda)
+sum(track.level.captures$n_Pro)
 
 #==============================================================================
 
@@ -66,6 +123,9 @@ sl.site.dat <- track.level.captures %>%
     n_catch = sum(n_catch, na.rm = T),
     n_Mna = sum(n_Mna),
     n_Rra = sum(n_Rra),
+    n_Mer = sum(n_Mer),
+    n_Pda = sum(n_Pda),
+    n_Pro = sum(n_Pro),
     Mna_per_trap = n_Mna/tot_traps,
     Rra_per_trap = n_Rra/tot_traps
   ) %>%
@@ -77,8 +137,13 @@ sl.site.dat <- track.level.captures %>%
       distinct(site, latitude, longitude),
     by = "site"
   ) %>%
-  # add in Rra_at_site information
-  mutate(Rra_at_site = ifelse(n_Rra > 0, 1, 0)) %>%
+  # add in rodent at site information
+  mutate(
+    Rra_at_site = ifelse(n_Rra > 0, 1, 0),
+    Mer_at_site = ifelse(n_Mer > 0, 1, 0),
+    Pda_at_site = ifelse(n_Pda > 0, 1, 0),
+    Pro_at_site = ifelse(n_Pro > 0, 1, 0)
+  ) %>%
   # tag as PREEMPT data
   mutate(data_source = rep("PREEMPT", nrow(.)))
 
@@ -103,6 +168,7 @@ sl.site.dat <- sl.site.dat %>%
   )
 
 nrow(sl.site.dat)
+assert_that(sum(track.level.captures$n_Mna) == sum(sl.site.dat$n_Mna))
 
 # And the same thing with only houses included
 sl.site.dat.only.houses <- track.level.captures %>%
@@ -113,6 +179,9 @@ sl.site.dat.only.houses <- track.level.captures %>%
     n_catch = sum(n_catch, na.rm = T),
     n_Mna = sum(n_Mna),
     n_Rra = sum(n_Rra),
+    n_Mer = sum(n_Mer),
+    n_Pda = sum(n_Pda),
+    n_Pro = sum(n_Pro),
     Mna_per_trap = n_Mna/tot_traps,
     Rra_per_trap = n_Rra/tot_traps
   ) %>%
@@ -124,11 +193,11 @@ sl.site.dat.only.houses <- track.level.captures %>%
       distinct(site, latitude, longitude),
     by = "site"
   ) %>%
-  # add in Rra_at_site information
+  # add in rodent at site information
   left_join(
     .,
     sl.site.dat %>%
-      select(site, Rra_at_site),
+      select(site, Rra_at_site, Mer_at_site, Pda_at_site, Pro_at_site),
     by = "site"
   ) %>%
   # tag as PREEMPT data
@@ -160,6 +229,145 @@ nrow(sl.site.dat.only.houses)
 #==============================================================================
 
 
+# Generate visit-level data tables for Sierra Leone
+
+# Generate visit-level capture data frame from PREEMPT data
+sl.visit.dat <- track.level.captures %>%
+  group_by(date, site, visit) %>%
+  summarize(
+    tot_traps = sum(tot_traps),
+    n_catch = sum(n_catch, na.rm = T),
+    n_Mna = sum(n_Mna),
+    n_Rra = sum(n_Rra),
+    n_Mer = sum(n_Mer),
+    n_Pda = sum(n_Pda),
+    n_Pro = sum(n_Pro),
+    Mna_per_trap = n_Mna/tot_traps,
+    Rra_per_trap = n_Rra/tot_traps
+  ) %>%
+  ungroup() %>%
+  # add in site lat/longs
+  left_join(
+    .,
+    agg %>%
+      distinct(site, latitude, longitude),
+    by = "site"
+  ) %>%
+  # add in rodent at site information
+  left_join(
+    .,
+    sl.site.dat %>%
+      select(site, Rra_at_site, Mer_at_site, Pda_at_site, Pro_at_site),
+    by = "site"
+  ) %>%
+  # add wet season variable
+  mutate(
+    month = lubridate::month(date),
+    wet_season = ifelse(month %in% 5:10, 1, 0),
+    # assume Talama, visit 1 occurred in wet season even though date is missing
+    wet_season = ifelse(site == "Talama" & visit == "1", 1, wet_season)
+  ) %>%
+  # tag as PREEMPT data
+  mutate(data_source = rep("PREEMPT", nrow(.))) %>%
+  # arrange
+  arrange(site, visit)
+
+# Add in visit-level Mastomys natalensis Lassa information
+sl.visit.dat <- sl.visit.dat %>%
+  left_join(
+    .,
+    capture.dat %>%
+      filter(species == "Mastomys natalensis") %>%
+      group_by(site, visit) %>%
+      summarize(
+        n_Mna_neg_lassa = sum(lassa == 0),
+        n_Mna_pos_lassa = sum(lassa == 1)
+      ) %>%
+      ungroup(),
+    by = c("site", "visit")
+  ) %>%
+  mutate(
+    n_Mna_neg_lassa = ifelse(is.na(n_Mna_neg_lassa), 0, n_Mna_neg_lassa),
+    n_Mna_pos_lassa = ifelse(is.na(n_Mna_pos_lassa), 0, n_Mna_pos_lassa),
+    n_Mna_tested_lassa = n_Mna_neg_lassa + n_Mna_pos_lassa
+  )
+
+nrow(sl.visit.dat)
+assert_that(sum(sl.site.dat$tot_traps) == sum(sl.visit.dat$tot_traps))
+assert_that(sum(sl.site.dat$n_Mna) == sum(sl.visit.dat$n_Mna))
+assert_that(sum(sl.site.dat$n_Mna_tested_lassa) == sum(sl.visit.dat$n_Mna_tested_lassa))
+
+# And the same thing with only houses included
+sl.visit.dat.only.houses <- track.level.captures %>%
+  filter(habitat_code == "H") %>%
+  group_by(date, site, visit) %>%
+  summarize(
+    tot_traps = sum(tot_traps),
+    n_catch = sum(n_catch, na.rm = T),
+    n_Mna = sum(n_Mna),
+    n_Rra = sum(n_Rra),
+    n_Mer = sum(n_Mer),
+    n_Pda = sum(n_Pda),
+    n_Pro = sum(n_Pro),
+    Mna_per_trap = n_Mna/tot_traps,
+    Rra_per_trap = n_Rra/tot_traps
+  ) %>%
+  ungroup() %>%
+  # add in site lat/longs
+  left_join(
+    .,
+    agg %>%
+      distinct(site, latitude, longitude),
+    by = "site"
+  ) %>%
+  # add in rodent at site information
+  left_join(
+    .,
+    sl.site.dat %>%
+      select(site, Rra_at_site, Mer_at_site, Pda_at_site, Pro_at_site),
+    by = "site"
+  ) %>%
+  # add wet season variable
+  mutate(
+    month = lubridate::month(date),
+    wet_season = ifelse(month %in% 5:10, 1, 0),
+    # assume Talama, visit 1 occurred in wet season even though date is missing
+    wet_season = ifelse(site == "Talama" & visit == "1", 1, wet_season)
+  ) %>%
+  # tag as PREEMPT data
+  mutate(data_source = rep("PREEMPT", nrow(.))) %>%
+  # arrange
+  arrange(site, visit)
+
+# Add in Mastomys natalensis Lassa information
+sl.visit.dat.only.houses <- sl.visit.dat.only.houses %>%
+  left_join(
+    .,
+    capture.dat %>%
+      filter(species == "Mastomys natalensis") %>%
+      filter(habitat_code == "H") %>%
+      group_by(site, visit) %>%
+      summarize(
+        n_Mna_neg_lassa = sum(lassa == 0),
+        n_Mna_pos_lassa = sum(lassa == 1)
+      ) %>%
+      ungroup(),
+    by = c("site", "visit")
+  ) %>%
+  mutate(
+    n_Mna_neg_lassa = ifelse(is.na(n_Mna_neg_lassa), 0, n_Mna_neg_lassa),
+    n_Mna_pos_lassa = ifelse(is.na(n_Mna_pos_lassa), 0, n_Mna_pos_lassa),
+    n_Mna_tested_lassa = n_Mna_neg_lassa + n_Mna_pos_lassa
+  )
+
+nrow(sl.visit.dat.only.houses) # Makump visit 2 had no house sampling
+assert_that(sum(sl.site.dat.only.houses$tot_traps) == sum(sl.visit.dat.only.houses$tot_traps))
+assert_that(sum(sl.site.dat.only.houses$n_Mna) == sum(sl.visit.dat.only.houses$n_Mna))
+assert_that(sum(sl.site.dat.only.houses$n_Mna_tested_lassa) == sum(sl.visit.dat.only.houses$n_Mna_tested_lassa))
+
+#==============================================================================
+
+
 # Generate site-level data tables for Guinea
 
 EFC.agg <- read_csv("data/clean/EFC/Aggregated_EFC_Capture_Data.csv")
@@ -171,7 +379,7 @@ guinea.site.dat <- EFC.agg %>%
     Tot = sum(Tot)
   ) %>%
   ungroup() %>%
-  filter(Sp %in% c("Mna", "Rra")) %>%
+  filter(Sp %in% c("Mna", "Rra", "Mer", "Mma", "Pda", "Pro")) %>%
   pivot_wider(
     names_from = Sp,
     values_from = Tot
@@ -181,12 +389,20 @@ guinea.site.dat <- EFC.agg %>%
     longitude = Longitude,
     latitude = Latitude,
     n_Mna = Mna,
-    n_Rra = Rra
+    n_Rra = Rra,
+    n_Mer = Mer,
+    n_Mma = Mma,
+    n_Pda = Pda,
+    n_Pro = Pro
   ) %>%
   mutate(
     Mna_per_trap = n_Mna/tot_traps,
     Rra_per_trap = n_Rra/tot_traps,
     Rra_at_site = ifelse(n_Rra > 0, 1, 0),
+    Mer_at_site = ifelse(n_Mer > 0, 1, 0),
+    Mma_at_site = ifelse(n_Mma > 0, 1, 0),
+    Pda_at_site = ifelse(n_Pda > 0, 1, 0),
+    Pro_at_site = ifelse(n_Pro > 0, 1, 0),
     n_catch = EFC.agg %>%
       group_by(Site) %>%
       summarize(n_catch = sum(Tot)) %>%
@@ -224,7 +440,7 @@ guinea.site.dat.only.houses <- EFC.agg %>%
     Tot = sum(Tot)
   ) %>%
   ungroup() %>%
-  filter(Sp %in% c("Mna", "Rra")) %>%
+  filter(Sp %in% c("Mna", "Rra", "Mer", "Mma", "Pda", "Pro")) %>%
   pivot_wider(
     names_from = Sp,
     values_from = Tot
@@ -234,7 +450,11 @@ guinea.site.dat.only.houses <- EFC.agg %>%
     longitude = Longitude,
     latitude = Latitude,
     n_Mna = Mna,
-    n_Rra = Rra
+    n_Rra = Rra,
+    n_Mer = Mer,
+    n_Mma = Mma,
+    n_Pda = Pda,
+    n_Pro = Pro
   ) %>%
   mutate(
     Mna_per_trap = n_Mna/tot_traps,
@@ -249,7 +469,7 @@ guinea.site.dat.only.houses <- EFC.agg %>%
   left_join(
     .,
     guinea.site.dat %>%
-      select(site, Rra_at_site),
+      select(site, Rra_at_site, Mer_at_site, Mma_at_site, Pda_at_site, Pro_at_site),
     by = "site"
   ) %>%
   # tag as EFC data
@@ -278,13 +498,193 @@ nrow(guinea.site.dat.only.houses)
 #==============================================================================
 
 
+# Generate visit-level data tables for Guinea
+
+guinea.visit.dat <- EFC.agg %>%
+  group_by(Site, Visit, Longitude, Latitude, Sp) %>%
+  summarize(
+    tot_traps = sum(TotTraps),
+    Tot = sum(Tot)
+  ) %>%
+  ungroup() %>%
+  filter(Sp %in% c("Mna", "Rra", "Mer", "Mma", "Pda", "Pro")) %>%
+  pivot_wider(
+    names_from = Sp,
+    values_from = Tot
+  ) %>%
+  rename(
+    site = Site,
+    visit = Visit,
+    longitude = Longitude,
+    latitude = Latitude,
+    n_Mna = Mna,
+    n_Rra = Rra,
+    n_Mer = Mer,
+    n_Mma = Mma,
+    n_Pda = Pda,
+    n_Pro = Pro
+  ) %>%
+  mutate(
+    Mna_per_trap = n_Mna/tot_traps,
+    Rra_per_trap = n_Rra/tot_traps,
+    Rra_at_site = ifelse(n_Rra > 0, 1, 0),
+    Mer_at_site = ifelse(n_Mer > 0, 1, 0),
+    Mma_at_site = ifelse(n_Mma > 0, 1, 0),
+    Pda_at_site = ifelse(n_Pda > 0, 1, 0),
+    Pro_at_site = ifelse(n_Pro > 0, 1, 0),
+    n_catch = EFC.agg %>%
+      group_by(Site, Visit) %>%
+      summarize(n_catch = sum(Tot)) %>%
+      ungroup() %>%
+      pull(n_catch)
+  ) %>%
+  # add wet season variable
+  mutate(
+    month = substr(visit, 1, 3),
+    month = match(month, month.abb),
+    wet_season = ifelse(month %in% 5:10, 1, 0)
+  ) %>%
+  # tag as EFC data
+  mutate(data_source = rep("EFC", nrow(.))) %>%
+  # arrange
+  arrange(site, visit)
+
+# Add in Mastomys natalensis Lassa information
+guinea.visit.dat <- guinea.visit.dat %>%
+  left_join(
+    .,
+    EFC.agg %>%
+      rename(
+        site = Site,
+        visit = Visit
+      ) %>%
+      filter(Species_ID == "Mastomys natalensis") %>%
+      group_by(site, visit) %>%
+      summarize(
+        n_Mna_tested_lassa = sum(NumTestLassa),
+        n_Mna_pos_lassa = sum(NumPosLassa),
+        n_Mna_neg_lassa = n_Mna_tested_lassa - n_Mna_pos_lassa
+      ) %>%
+      ungroup(),
+    by = c("site", "visit")
+  )
+
+nrow(guinea.visit.dat)
+assert_that(sum(guinea.site.dat$tot_traps) == sum(guinea.visit.dat$tot_traps))
+assert_that(sum(guinea.site.dat$n_Mna) == sum(guinea.visit.dat$n_Mna))
+assert_that(sum(guinea.site.dat$n_Mna_tested_lassa) == sum(guinea.visit.dat$n_Mna_tested_lassa))
+
+# And the same thing with only houses included
+guinea.visit.dat.only.houses <- EFC.agg %>%
+  filter(Code.Habitat == "H") %>%
+  group_by(Site, Visit, Longitude, Latitude, Sp) %>%
+  summarize(
+    tot_traps = sum(TotTraps),
+    Tot = sum(Tot)
+  ) %>%
+  ungroup() %>%
+  filter(Sp %in% c("Mna", "Rra", "Mer", "Mma", "Pda", "Pro")) %>%
+  pivot_wider(
+    names_from = Sp,
+    values_from = Tot
+  ) %>%
+  rename(
+    site = Site,
+    visit = Visit,
+    longitude = Longitude,
+    latitude = Latitude,
+    n_Mna = Mna,
+    n_Rra = Rra,
+    n_Mer = Mer,
+    n_Mma = Mma,
+    n_Pda = Pda,
+    n_Pro = Pro
+  ) %>%
+  mutate(
+    Mna_per_trap = n_Mna/tot_traps,
+    Rra_per_trap = n_Rra/tot_traps,
+    n_catch = EFC.agg %>%
+      filter(Code.Habitat == "H") %>%
+      group_by(Site, Visit) %>%
+      summarize(n_catch = sum(Tot)) %>%
+      ungroup() %>%
+      pull(n_catch)
+  ) %>%
+  left_join(
+    .,
+    guinea.site.dat %>%
+      select(site, Rra_at_site, Mer_at_site, Mma_at_site, Pda_at_site, Pro_at_site),
+    by = "site"
+  ) %>%
+  # add wet season variable
+  mutate(
+    month = substr(visit, 1, 3),
+    month = match(month, month.abb),
+    wet_season = ifelse(month %in% 5:10, 1, 0)
+  ) %>%
+  # tag as EFC data
+  mutate(data_source = rep("EFC", nrow(.)))
+
+# Add in Mastomys natalensis Lassa information
+guinea.visit.dat.only.houses <- guinea.visit.dat.only.houses %>%
+  left_join(
+    .,
+    EFC.agg %>%
+      rename(
+        site = Site,
+        visit = Visit
+      ) %>%
+      filter(Species_ID == "Mastomys natalensis") %>%
+      filter(Code.Habitat == "H") %>%
+      group_by(site, visit) %>%
+      summarize(
+        n_Mna_tested_lassa = sum(NumTestLassa),
+        n_Mna_pos_lassa = sum(NumPosLassa),
+        n_Mna_neg_lassa = n_Mna_tested_lassa - n_Mna_pos_lassa
+      ) %>%
+      ungroup(),
+    by = c("site", "visit")
+  )
+
+nrow(guinea.visit.dat.only.houses)
+assert_that(sum(guinea.site.dat.only.houses$tot_traps) == sum(guinea.visit.dat.only.houses$tot_traps))
+assert_that(sum(guinea.site.dat.only.houses$n_Mna) == sum(guinea.visit.dat.only.houses$n_Mna))
+assert_that(sum(guinea.site.dat.only.houses$n_Mna_tested_lassa) == sum(guinea.visit.dat.only.houses$n_Mna_tested_lassa))
+
+#==============================================================================
+
+
 # Combine site-level trapping data from Sierra Leone and Guinea
 
 site.dat <- 
-  bind_rows(sl.site.dat, guinea.site.dat)
+  bind_rows(sl.site.dat, guinea.site.dat) %>%
+  mutate(
+    n_Mma = ifelse(data_source == "PREEMPT", 0, n_Mma),
+    Mma_at_site = ifelse(data_source == "PREEMPT", 0, Mma_at_site)
+  ) %>%
+  select(
+    site, latitude, longitude, tot_traps, n_catch,
+    n_Mna, n_Rra, n_Mer, n_Mma, n_Pda, n_Pro,
+    Mna_per_trap, Rra_per_trap,
+    Rra_at_site, Mer_at_site, Mma_at_site, Pda_at_site, Pro_at_site,
+    n_Mna_neg_lassa, n_Mna_pos_lassa, n_Mna_tested_lassa,
+    data_source
+  )
 
 site.dat.only.houses <- 
-  bind_rows(sl.site.dat.only.houses, guinea.site.dat.only.houses)
+  bind_rows(sl.site.dat.only.houses, guinea.site.dat.only.houses) %>%
+  mutate(
+    n_Mma = ifelse(data_source == "PREEMPT", 0, n_Mma),
+    Mma_at_site = ifelse(data_source == "PREEMPT", 0, Mma_at_site)
+  ) %>%
+  select(
+    site, latitude, longitude, tot_traps, n_catch,
+    n_Mna, n_Rra, n_Mer, n_Mma, n_Pda, n_Pro,
+    Mna_per_trap, Rra_per_trap,
+    Rra_at_site, Mer_at_site, Mma_at_site, Pda_at_site, Pro_at_site,
+    n_Mna_neg_lassa, n_Mna_pos_lassa, n_Mna_tested_lassa,
+    data_source
+  )
 
 # Plot observed catch per trap for both species by site
 site.dat %>%
@@ -307,12 +707,80 @@ site.dat %>%
 #==============================================================================
 
 
+# Combine visit-level trapping data from Sierra Leone and Guinea
+
+visit.dat <- 
+  bind_rows(
+    sl.visit.dat %>%
+      mutate(visit = as.character(visit)), 
+    guinea.visit.dat
+  ) %>%
+  mutate(
+    n_Mma = ifelse(data_source == "PREEMPT", 0, n_Mma),
+    Mma_at_site = ifelse(data_source == "PREEMPT", 0, Mma_at_site)
+  ) %>%
+  select(
+    site, latitude, longitude, 
+    visit, date, month, wet_season,
+    tot_traps, n_catch,
+    n_Mna, n_Rra, n_Mer, n_Mma, n_Pda, n_Pro,
+    Mna_per_trap, Rra_per_trap,
+    Rra_at_site, Mer_at_site, Mma_at_site, Pda_at_site, Pro_at_site,
+    n_Mna_neg_lassa, n_Mna_pos_lassa, n_Mna_tested_lassa,
+    data_source
+  )
+
+visit.dat.only.houses <- 
+  bind_rows(
+    sl.visit.dat.only.houses %>%
+      mutate(visit = as.character(visit)), 
+    guinea.visit.dat.only.houses
+  ) %>%
+  mutate(
+    n_Mma = ifelse(data_source == "PREEMPT", 0, n_Mma),
+    Mma_at_site = ifelse(data_source == "PREEMPT", 0, Mma_at_site)
+  ) %>%
+  select(
+    site, latitude, longitude, 
+    visit, date, month, wet_season,
+    tot_traps, n_catch,
+    n_Mna, n_Rra, n_Mer, n_Mma, n_Pda, n_Pro,
+    Mna_per_trap, Rra_per_trap,
+    Rra_at_site, Mer_at_site, Mma_at_site, Pda_at_site, Pro_at_site,
+    n_Mna_neg_lassa, n_Mna_pos_lassa, n_Mna_tested_lassa,
+    data_source
+  )
+
+# Plot observed catch per trap for both species by site
+visit.dat %>%
+  rename(
+    Mna = Mna_per_trap,
+    Rra = Rra_per_trap
+  ) %>%
+  pivot_longer(
+    cols = c("Mna", "Rra"),
+    names_to = "species",
+    values_to = "catch_per_trap"
+  ) %>%
+  ggplot(aes(x = species, y = catch_per_trap, color = species)) +
+  geom_jitter(width = 0.1) +
+  xlab("Rodent species") +
+  ylab("Catch per trap") +
+  facet_wrap(~site) +
+  theme_minimal()
+
+#==============================================================================
+
+
 # Get distance to the coastline, Freetown, and Conakry for all study sites
 # https://stackoverflow.com/questions/51837454/r-measuring-distance-from-a-coastline
 
 # Import country backgrounds and covert data to spatial points
-sl <- ne_countries(scale = "medium", country = c("Guinea", "Sierra Leone")) %>%
-  st_as_sf()
+sl <- ne_countries(
+  scale = "medium", 
+  country = c("Guinea", "Sierra Leone"),
+  returnclass = "sf"
+)
 site.points <- site.dat %>%
   st_as_sf(coords = c("longitude", "latitude"), crs = st_crs(sl))
 
@@ -324,7 +792,7 @@ osm.box[2,1] <- 4 # ymin
 osm.box[2,2] <- 12 # ymax
 
 osm.box <- osm.box %>%
-  osmdata::opq() %>%
+  osmdata::opq(timeout = 100) %>%
   osmdata::add_osm_feature("natural", "coastline") %>%
   osmdata::osmdata_sf()
 
@@ -438,6 +906,9 @@ site.dat %>%
 
 
 # Save site-level trapping data from Sierra Leone and Guinea
-
 write_csv(site.dat, "data/clean/combined/site_level_data.csv")
 write_csv(site.dat.only.houses, "data/clean/combined/site_level_data_only_houses.csv")
+
+# Save visit-level trapping data from Sierra Leone and Guinea
+write_csv(visit.dat, "data/clean/combined/visit_level_data.csv")
+write_csv(visit.dat.only.houses, "data/clean/combined/visit_level_data_only_houses.csv")
