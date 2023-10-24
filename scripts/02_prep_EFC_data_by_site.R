@@ -25,9 +25,6 @@
 
 library(tidyverse)
 library(readxl)
-library(geosphere)
-library(sp)
-library(raster)
 
 # Load pre-defined helper functions
 source("R/functions.R")
@@ -90,7 +87,7 @@ summary.trap.dat$Line <- gsub("/", "", x = summary.trap.dat$Line)
 # Site names are encoded into the first two letters of
 # Line. Extract this information and add a spelled-out site
 # column. Remove entries without meaningful site name in the
-# original datase. These removals are either irrelevant (empty row)
+# original dataset. These removals are either irrelevant (empty row)
 # or do not have trap-nights associated with them and are therefore
 # unusable (e.g., remarkable points).
 site.code <- substr(summary.trap.dat$Line, 1, 2)
@@ -128,8 +125,8 @@ summary.trap.dat[summary.trap.dat$Site == 'Bamba', 'Latitude'] <- 10.00055556
 summary.trap.dat[summary.trap.dat$Site == 'Bamba', 'Longitude'] <- -13.885
 
 # Fill in other missing coordinates by averaging lat/lon over each site
-agg.lat <- aggregate(Latitude~Site, data = summary.trap.dat, FUN = mean)
-agg.lon <- aggregate(Longitude~Site, data = summary.trap.dat, FUN = mean)
+agg.lat <- aggregate(Latitude ~ Site, data = summary.trap.dat, FUN = mean)
+agg.lon <- aggregate(Longitude ~ Site, data = summary.trap.dat, FUN = mean)
 summary.trap.dat <- subset(summary.trap.dat, , -c(Latitude, Longitude))
 summary.trap.dat <- merge(summary.trap.dat, data.frame(Site = agg.lon$Site,
                                                        Longitude = agg.lon$Longitude,
@@ -162,7 +159,6 @@ summary.trap.dat <- merge(summary.trap.dat, date.table, all.x = TRUE, by = c('Si
 # Look for column names of the form "Nbi_Traps"
 ntrap.cols <- grepl('_Traps', names(summary.trap.dat)) 
 summary.trap.dat$Nights <- rowSums(summary.trap.dat[, ntrap.cols] > 0)
-
 summary.trap.dat$Year <- as.numeric(format(summary.trap.dat$Date, format = '%Y'))
 
 # Document the source of these data
