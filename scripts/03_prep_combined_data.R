@@ -717,11 +717,34 @@ visit.dat <-
   ) %>%
   mutate(
     n_Mma = ifelse(data_source == "PREEMPT", 0, n_Mma),
-    Mma_at_site = ifelse(data_source == "PREEMPT", 0, Mma_at_site)
+    Mma_at_site = ifelse(data_source == "PREEMPT", 0, Mma_at_site),
+    # Generate a new "date_mod" variable, assuming all EFC sites were sampled 
+    # on the 15th (middle of the month)
+    date_mod = ifelse(
+      data_source == "EFC",
+      as.character(as.Date(paste0(visit, "-15"), format = "%B-%y-%d")),
+      as.character(date)
+    ),
+    # Assume Talama, visit 1 occurred in August, which roughly matches other
+    # PREEMPT visit 1 samples
+    date_mod = ifelse(
+      site == "Talama" & visit == "1",
+      "2019-08-15",
+      date_mod
+    ),
+    date_mod = as.Date(date_mod)
   ) %>%
+  arrange(data_source, site, date_mod) %>%
+  # Generate a new "visit_mod" variable that actually records the visit number
+  # at each individual site ("visit" for PREEMPT sites records the visit 
+  # number relative to PREEMPT sampling as a whole)
+  group_by(data_source, site) %>%
+  mutate(visit_mod = 1:n()) %>%
+  ungroup() %>%
+  arrange(data_source, site, visit_mod) %>%
   select(
     site, latitude, longitude, 
-    visit, date, month, wet_season,
+    date, visit, date_mod, visit_mod, month, wet_season,
     tot_traps, n_catch,
     n_Mna, n_Rra, n_Mer, n_Mma, n_Pda, n_Pro,
     Mna_per_trap, Rra_per_trap,
@@ -740,9 +763,19 @@ visit.dat.only.houses <-
     n_Mma = ifelse(data_source == "PREEMPT", 0, n_Mma),
     Mma_at_site = ifelse(data_source == "PREEMPT", 0, Mma_at_site)
   ) %>%
+  # Add "date_mod" and "visit_mod" variables onto this data frame using a join
+  # since one PREEMPT visit (Makump, visit 2) has no house traps at all and is
+  # therefore missing here (didn't want to miscount visits within sites)
+  left_join(
+    .,
+    visit.dat %>%
+      select(site, date, visit, date_mod, visit_mod),
+    by = c("site", "date", "visit")
+  ) %>%
+  arrange(data_source, site, visit_mod) %>%
   select(
     site, latitude, longitude, 
-    visit, date, month, wet_season,
+    date, visit, date_mod, visit_mod, month, wet_season,
     tot_traps, n_catch,
     n_Mna, n_Rra, n_Mer, n_Mma, n_Pda, n_Pro,
     Mna_per_trap, Rra_per_trap,
