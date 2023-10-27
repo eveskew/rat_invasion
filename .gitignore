@@ -12,5 +12,5 @@ outputs/misc
 saved_models
 scripts/archive
 scripts/scraps.R
-stan_models
+stan_models/*
 !stan_models/*.stan

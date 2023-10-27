@@ -22,8 +22,11 @@ site.dat.only.houses <- read_csv(
 # Make a paneled plot of trapping success across Sierra Leone and Guinea, 
 # using all site-level data
 
-sl <- ne_countries(scale = "medium", country = c("Guinea", "Sierra Leone")) %>%
-  st_as_sf()
+sl <- ne_countries(
+  country = c("Guinea", "Sierra Leone"),
+  scale = "medium",
+  returnclass = "sf"
+)
 site.points <- site.dat %>%
   st_as_sf(coords = c("longitude", "latitude"), crs = st_crs(sl))
 
@@ -112,8 +115,11 @@ cowplot::plot_grid(
 # Make a paneled plot of trapping success across Sierra Leone and Guinea, 
 # using only house trapping data
 
-sl <- ne_countries(scale = "medium", country = c("Guinea", "Sierra Leone")) %>%
-  st_as_sf()
+sl <- ne_countries(
+  country = c("Guinea", "Sierra Leone"),
+  scale = "medium",
+  returnclass = "sf"
+) 
 site.points <- site.dat.only.houses %>%
   st_as_sf(coords = c("longitude", "latitude"), crs = st_crs(sl))
 
@@ -263,7 +269,7 @@ hist %>%
   ggplot(aes(x = x, ymin = 0, ymax = y, fill = area)) +
   geom_ribbon() +
   geom_line(aes(y = y), linewidth = 1) +
-  geom_vline(xintercept = 0, lty = 2, size = 2) +
+  geom_vline(xintercept = 0, lty = 2, linewidth = 2) +
   xlab(expression(paste("Coefficient for ", italic("Rattus rattus"), " presence"))) +
   ylab("Density") +
   xlim(-4, 1) +
@@ -344,11 +350,11 @@ sum(preds.summary$in_interval)
 ggplot() +
   geom_linerange(
     aes(x = site, ymin = lower99, ymax = upper99),
-    data = preds.summary, size = 0.5
+    data = preds.summary, linewidth = 0.5
   ) +
   geom_linerange(
     aes(x = site, ymin = lower90, ymax = upper90),
-    data = preds.summary, size = 1.5
+    data = preds.summary, linewidth = 1.5
   ) +
   geom_point(
     aes(x = site, y = n_Mna, color = as.factor(Rra_at_site)), 
@@ -427,11 +433,11 @@ sum(preds.summary$in_interval)
 ggplot() +
   geom_linerange(
     aes(x = site, ymin = lower99, ymax = upper99),
-    data = preds.summary, size = 0.5
+    data = preds.summary, linewidth = 0.5
   ) +
   geom_linerange(
     aes(x = site, ymin = lower90, ymax = upper90),
-    data = preds.summary, size = 1.5
+    data = preds.summary, linewidth = 1.5
   ) +
   geom_point(
     aes(x = site, y = n_Mna, col = as.factor(Rra_at_site)), 
@@ -512,7 +518,7 @@ hist %>%
   ggplot(aes(x = x, ymin = 0, ymax = y, fill = area)) +
   geom_ribbon() +
   geom_line(aes(y = y), linewidth = 1) +
-  geom_vline(xintercept = 0, lty = 2, size = 2) +
+  geom_vline(xintercept = 0, lty = 2, linewidth = 2) +
   xlab(expression(paste("Coefficient for ", italic("Rattus rattus"), " presence"))) +
   ylab("Density") +
   xlim(-5, 1) +
@@ -571,11 +577,11 @@ sum(preds.summary$in_interval)
 ggplot() +
   geom_linerange(
     aes(x = site, ymin = lower99, ymax = upper99),
-    data = preds.summary, size = 0.5
+    data = preds.summary, linewidth = 0.5
   ) +
   geom_linerange(
     aes(x = site, ymin = lower90, ymax = upper90),
-    data = preds.summary, size = 1.5
+    data = preds.summary, linewidth = 1.5
   ) +
   geom_point(
     aes(x = site, y = n_Mna, color = as.factor(Rra_at_site)), 
@@ -677,8 +683,8 @@ d.all <- preds %>%
   ) %>%
   ungroup() %>%
   ggplot(aes(x = site_status, y = mean, color = site_status)) +
-  geom_linerange(aes(ymin = lower99, ymax = upper99), size = 1) +
-  geom_linerange(aes(ymin = lower90, ymax = upper90), size = 3) +
+  geom_linerange(aes(ymin = lower99, ymax = upper99), linewidth = 1) +
+  geom_linerange(aes(ymin = lower90, ymax = upper90), linewidth = 3) +
   geom_point(size = 5) +
   xlab(expression(paste(italic("Rattus rattus"), " status at site"))) +
   ylab(expression(atop(italic("Mastomys natalensis"), "catch per trap (average site)"))) +
@@ -717,8 +723,8 @@ d.house <- preds %>%
   ) %>%
   ungroup() %>%
   ggplot(aes(x = site_status, y = mean, color = site_status)) +
-  geom_linerange(aes(ymin = lower99, ymax = upper99), size = 1) +
-  geom_linerange(aes(ymin = lower90, ymax = upper90), size = 3) +
+  geom_linerange(aes(ymin = lower99, ymax = upper99), linewidth = 1) +
+  geom_linerange(aes(ymin = lower90, ymax = upper90), linewidth = 3) +
   geom_point(size = 5) +
   xlab(expression(paste(italic("Rattus rattus"), " status at site"))) +
   ylab(expression(atop(italic("Mastomys natalensis"), "catch per trap (average site)"))) +
@@ -797,8 +803,10 @@ m2 <- site.dat.only.houses %>%
 
 # Plot geography of historical and contemporary sites
 
-sl <- ne_states(country = c("Sierra Leone", "Guinea")) %>%
-  st_as_sf()
+sl <- ne_states(
+  country = c("Sierra Leone", "Guinea"),
+  returnclass = "sf"
+)
 site.points <- m2 %>%
   st_as_sf(coords = c("longitude", "latitude"), crs = st_crs(sl))
 
@@ -823,8 +831,10 @@ ggplot() +
 
 # Filter to only sites that lie in the eastern province of Sierra Leone,
 # where the original McCormick sampling happened
-sl <- ne_states(country = "Sierra Leone") %>%
-  st_as_sf()
+sl <- ne_states(
+  country = "Sierra Leone",
+  returnclass = "sf"
+)
 site.points.mod <- site.points %>%
   filter(st_intersects(site.points, sl) %in% c(2))
 
@@ -986,7 +996,7 @@ stan.dat <- list(
 )
 
 # Load model
-spill.mod <- cmdstan_model("stan_models/spillover_risk.stan")
+spill.mod <- cmdstan_model("stan_models/spillover_risk_site_level.stan")
 
 # Fit model
 fit.spill <- spill.mod$sample(
@@ -1000,8 +1010,8 @@ fit.spill <- spill.mod$sample(
 )
 
 # Save/load fit model object
-fit.spill$save_object("saved_models/spillover_risk.RDS")
-fit.spill <- readRDS("saved_models/spillover_risk.RDS")
+fit.spill$save_object("saved_models/spillover_risk_site_level.RDS")
+fit.spill <- readRDS("saved_models/spillover_risk_site_level.RDS")
 
 fit.spill$diagnostic_summary()
 fit.spill$print(max_rows = 100)
@@ -1010,7 +1020,7 @@ draws.spill <- fit.spill$draws(format = "matrix") %>%
   data.frame() %>%
   select(a, bR, sigma_site)
 
-jpeg("outputs/misc/model_out_spillover_risk.jpeg",
+jpeg("outputs/misc/model_out_spillover_risk_site_level.jpeg",
      width = 1000, height = 500, units = "px")
 
 precis(draws.spill, prob = 0.99)
@@ -1031,7 +1041,7 @@ hist %>%
   ggplot(aes(x = x, ymin = 0, ymax = y, fill = area)) +
   geom_ribbon() +
   geom_line(aes(y = y), linewidth = 1) +
-  geom_vline(xintercept = 0, lty = 2, size = 2) +
+  geom_vline(xintercept = 0, lty = 2, linewidth = 2) +
   xlab(expression(paste("Coefficient for ", italic("Rattus rattus"), " presence"))) +
   ylab("Density") +
   xlim(-5, 1) +
@@ -1043,7 +1053,7 @@ hist %>%
     legend.position = "none"
   )
 
-ggsave("outputs/misc/spillover_risk_model_Rra_at_site_coefficient.jpeg",
+ggsave("outputs/misc/spillover_risk_model_site_level_Rra_at_site_coefficient.jpeg",
        width = 2000, height = 1600, units = "px")
 
 
@@ -1090,11 +1100,11 @@ sum(preds.summary$in_interval)
 ggplot() +
   geom_linerange(
     aes(x = site, ymin = lower99, ymax = upper99),
-    data = preds.summary, size = 0.5
+    data = preds.summary, linewidth = 0.5
   ) +
   geom_linerange(
     aes(x = site, ymin = lower90, ymax = upper90),
-    data = preds.summary, size = 1.5
+    data = preds.summary, linewidth = 1.5
   ) +
   geom_point(
     aes(x = site, y = n_Mna_pos_lassa, color = as.factor(Rra_at_site)), 
@@ -1111,14 +1121,17 @@ ggplot() +
     axis.title.x = element_blank()
   )
 
-ggsave("outputs/misc/predictive_check_spillover_risk.jpeg", 
+ggsave("outputs/misc/predictive_check_spillover_risk_site_level.jpeg", 
        width = 3000, height = 2000, unit = "px")
 
 
 # Generate figure
 
-sl <- ne_countries(scale = "medium", country = c("Guinea", "Sierra Leone")) %>%
-  st_as_sf()
+sl <- ne_countries(
+  country = c("Guinea", "Sierra Leone"),
+  scale = "medium", 
+  returnclass = "sf"
+)
 site.points <- site.dat.only.houses %>%
   st_as_sf(coords = c("longitude", "latitude"), crs = st_crs(sl))
 
@@ -1196,7 +1209,7 @@ cowplot::plot_grid(
 )
 
 ggsave(
-  "outputs/spillover_risk_index_house_traps.jpeg", 
+  "outputs/spillover_risk_index_site_level_house_traps.jpeg", 
   width = 4000, 
   height = 2000, 
   unit = "px"
