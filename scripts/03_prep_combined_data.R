@@ -49,15 +49,19 @@ agg <- read_csv("data/clean/PREEMPT/aggregated_PREEMPT_capture_data.csv")
 # there were of each species in each country
 
 capture.dat %>%
-  select(species) %>%
-  rename(Species_ID = species) %>%
+  select(species, habitat_code) %>%
+  rename(
+    Species_ID = species,
+    Code.Habitat = habitat_code
+  ) %>%
   mutate(
     Tot = rep(1, nrow(.)),
-    Country = rep("Sierra Leone", nrow(.))) %>%
+    Country = rep("Sierra Leone", nrow(.))
+  ) %>%
   rbind(
     .,
     read_csv("data/clean/EFC/Aggregated_EFC_Capture_Data.csv") %>%
-      select(Species_ID, Country, Tot)
+      select(Species_ID, Country, Code.Habitat, Tot)
   ) %>%
   group_by(Species_ID, Country) %>%
   summarize(n = sum(Tot)) %>%

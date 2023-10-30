@@ -111,6 +111,39 @@ plot(precis(draws.m1, prob = 0.9), add = TRUE)
 dev.off()
 
 
+# Generate parameter trace plots
+
+# Set palette for plotting
+palette <- adjustcolor(wesanderson::wes_palette("Darjeeling1"), alpha.f = 0.3)
+
+# Base figure
+p <- bayesplot::mcmc_trace(
+  fit.m1$draws(format = "matrix"), 
+  pars = c("a", "bR", "bW", "sigma_site"),
+  size = 0.8
+) 
+
+# Relabel strip text
+levels(p$data$parameter) <- c(
+  "grand mean", "*Rattus rattus* effect (present vs. absent)",
+  "season effect (wet vs. dry)", "σ (for site-level random effects)"
+)
+
+# Plot
+p + 
+  scale_color_manual(values = palette) + 
+  theme_minimal() +
+  theme(
+    text = element_text(size = 20),
+    strip.text.x = ggtext::element_markdown(face = "bold")
+  )
+
+ggsave(
+  "outputs/misc/visit_level_all_traps_trace_plots.jpeg",
+  width = 3500, height = 3000, units = "px"
+)
+
+
 # Generate figure of the Rra_at_site posterior (have to do some of this 
 # manually)
 cutoff <- 0
@@ -254,6 +287,39 @@ plot(precis(draws.m2, prob = 0.99), col = "gold2")
 plot(precis(draws.m2, prob = 0.9), add = TRUE)
 
 dev.off()
+
+
+# Generate parameter trace plots
+
+# Set palette for plotting
+palette <- adjustcolor(wesanderson::wes_palette("Darjeeling1"), alpha.f = 0.3)
+
+# Base figure
+p <- bayesplot::mcmc_trace(
+  fit.m2$draws(format = "matrix"), 
+  pars = c("a", "bR", "bW", "sigma_site"),
+  size = 0.8
+) 
+
+# Relabel strip text
+levels(p$data$parameter) <- c(
+  "grand mean", "*Rattus rattus* effect (present vs. absent)",
+  "season effect (wet vs. dry)", "σ (for site-level random effects)"
+)
+
+# Plot
+p + 
+  scale_color_manual(values = palette) + 
+  theme_minimal() +
+  theme(
+    text = element_text(size = 20),
+    strip.text.x = ggtext::element_markdown(face = "bold")
+  )
+
+ggsave(
+  "outputs/misc/visit_level_house_traps_trace_plots.jpeg",
+  width = 3500, height = 3000, units = "px"
+)
 
 
 # Generate figure of the Rra_at_site posterior (have to do some of this 
@@ -746,6 +812,39 @@ plot(precis(draws.spill, prob = 0.9), add = TRUE)
 dev.off()
 
 
+# Generate parameter trace plots
+
+# Set palette for plotting
+palette <- adjustcolor(wesanderson::wes_palette("Darjeeling1"), alpha.f = 0.3)
+
+# Base figure
+p <- bayesplot::mcmc_trace(
+  fit.spill$draws(format = "matrix"), 
+  pars = c("a", "bR", "bW", "sigma_site"),
+  size = 0.8
+) 
+
+# Relabel strip text
+levels(p$data$parameter) <- c(
+  "grand mean", "*Rattus rattus* effect (present vs. absent)",
+  "season effect (wet vs. dry)", "σ (for site-level random effects)"
+)
+
+# Plot
+p + 
+  scale_color_manual(values = palette) + 
+  theme_minimal() +
+  theme(
+    text = element_text(size = 20),
+    strip.text.x = ggtext::element_markdown(face = "bold")
+  )
+
+ggsave(
+  "outputs/misc/spillover_risk_model_visit_level_house_traps_trace_plots.jpeg",
+  width = 3500, height = 3000, units = "px"
+)
+
+
 # Generate figure of the Rra_at_site posterior (have to do some of this 
 # manually)
 cutoff <- 0
@@ -1102,14 +1201,18 @@ dat.ridges <- data.frame(
   arrange(species)
 
 # Plot
+palette <- adjustcolor(wesanderson::wes_palette("Darjeeling2"))
+
 dat.ridges %>%
-  ggplot(aes(x = value, y = species, fill = species)) +
+  mutate(species = forcats::fct_rev(species)) %>%
+  ggplot(aes(x = value, y = species, fill = rev(species))) +
   geom_vline(xintercept = 0, linewidth = 2, lty = 2) +
   ggridges::stat_density_ridges(
     quantile_lines = TRUE, 
     quantiles = c(0.05, 0.95), 
-    alpha = 0.9
+    alpha = 0.6
   ) +
+  scale_fill_manual(values = palette) +
   theme_minimal() +
   xlab("Parameter Value") +
   ylab("") +
