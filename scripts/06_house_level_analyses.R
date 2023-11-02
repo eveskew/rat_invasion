@@ -146,10 +146,36 @@ house.yes.no <- house.level.captures %>%
   mutate(Rra_at_site_character = ifelse(Rra_at_site == 1, "Present", "Absent")) %>%
   ggplot(aes(x = Rra_at_site_character, y = Mna_per_trap)) +
   geom_violin(fill = alpha("lightgrey", 0.5)) +
-  geom_jitter(aes(color = Rra_at_site_character), height = 0, width = 0.25, size = 7) +
+  geom_jitter(aes(color = Rra_at_site_character), height = 0, width = 0.25, size = 5) +
+  # geom_segment(
+  #   x = 0.75, xend = 1.25,
+  #   y = house.level.captures %>%
+  #     filter(Rra_at_site == 0) %>%
+  #     pull(Mna_per_trap) %>%
+  #     mean(),
+  #   yend = house.level.captures %>%
+  #     filter(Rra_at_site == 0) %>%
+  #     pull(Mna_per_trap) %>%
+  #     mean(),
+  #   color = "black",
+  #   linewidth = 2
+  # ) +
+  # geom_segment(
+  #   x = 1.75, xend = 2.25,
+  #   y = house.level.captures %>%
+  #     filter(Rra_at_site == 1) %>%
+  #     pull(Mna_per_trap) %>%
+  #     mean(),
+  #   yend = house.level.captures %>%
+  #     filter(Rra_at_site == 1) %>%
+  #     pull(Mna_per_trap) %>%
+  #     mean(),
+  #   color = "darkred",
+  #   linewidth = 2
+  # ) +
   xlab(expression(paste(italic("Rattus rattus"), " status at site"))) +
   ylab(expression(atop(italic("Mastomys natalensis"), "catch per trap"))) +
-  scale_color_manual(values = c(alpha("black", 0.2), alpha("darkred", 0.2))) +
+  scale_color_manual(values = c(alpha("black", 0.15), alpha("darkred", 0.15))) +
   theme_minimal() +
   theme(
     text = element_text(size = 20),
@@ -157,6 +183,96 @@ house.yes.no <- house.level.captures %>%
   )
 
 house.yes.no
+
+# Generate a plot that breaks out the data by season
+house.level.captures.summary <- house.level.captures %>%
+  group_by(Rra_at_site, wet_season) %>%
+  summarize(
+    tot_traps = sum(tot_traps),
+    n_Mna = sum(n_Mna),
+    Mna_per_trap = n_Mna/tot_traps
+  ) %>%
+  ungroup() %>%
+  mutate(
+    x = case_when(
+      Rra_at_site == 0 & wet_season == 0 ~ -0.1,
+      Rra_at_site == 0 & wet_season == 1 ~ 0.1,
+      Rra_at_site == 1 & wet_season == 0 ~ 0.9,
+      Rra_at_site == 1 & wet_season == 1 ~ 1.1
+    )
+  )
+
+house.level.captures %>%
+  mutate(
+    Rra_at_site = as.factor(Rra_at_site),
+    wet_season = as.factor(wet_season),
+    x = case_when(
+      Rra_at_site == 0 & wet_season == 0 ~ -0.1,
+      Rra_at_site == 0 & wet_season == 1 ~ 0.1,
+      Rra_at_site == 1 & wet_season == 0 ~ 0.9,
+      Rra_at_site == 1 & wet_season == 1 ~ 1.1
+    )
+  ) %>%
+  ggplot(aes(x = x, y = Mna_per_trap, color = wet_season, group = wet_season)) +
+  geom_jitter(size = 5, height = 0, width = 0.05) +
+  geom_segment(
+    x = -0.15, xend = -0.05,
+    y = house.level.captures.summary %>%
+      filter(Rra_at_site == 0, wet_season == 0) %>%
+      pull(Mna_per_trap),
+    yend = house.level.captures.summary %>%
+      filter(Rra_at_site == 0, wet_season == 0) %>%
+      pull(Mna_per_trap),
+    color = "wheat3",
+    linewidth = 2
+  ) +
+  geom_segment(
+    x = 0.05, xend = 0.15,
+    y = house.level.captures.summary %>%
+      filter(Rra_at_site == 0, wet_season == 1) %>%
+      pull(Mna_per_trap),
+    yend = house.level.captures.summary %>%
+      filter(Rra_at_site == 0, wet_season == 1) %>%
+      pull(Mna_per_trap),
+    color = "steelblue",
+    linewidth = 2
+  ) +
+  geom_segment(
+    x = 0.85, xend = 0.95,
+    y = house.level.captures.summary %>%
+      filter(Rra_at_site == 1, wet_season == 0) %>%
+      pull(Mna_per_trap),
+    yend = house.level.captures.summary %>%
+      filter(Rra_at_site == 1, wet_season == 0) %>%
+      pull(Mna_per_trap),
+    color = "wheat3",
+    linewidth = 2
+  ) +
+  geom_segment(
+    x = 1.05, xend = 1.15,
+    y = house.level.captures.summary %>%
+      filter(Rra_at_site == 1, wet_season == 1) %>%
+      pull(Mna_per_trap),
+    yend = house.level.captures.summary %>%
+      filter(Rra_at_site == 1, wet_season == 1) %>%
+      pull(Mna_per_trap),
+    color = "steelblue",
+    linewidth = 2
+  ) +
+  xlab(expression(paste(italic("Rattus rattus"), " status at site"))) +
+  ylab(expression(atop(italic("Mastomys natalensis"), "catch per trap"))) +
+  theme_minimal() +
+  scale_color_manual(
+    values = c(
+    alpha("wheat3", 0.05), 
+    alpha("steelblue", 0.05)
+    )
+  ) +
+  xlim(-0.3, 1.3) +
+  theme(
+    text = element_text(size = 21),
+    legend.position = "none"
+  )
 
 #==============================================================================
 
@@ -203,7 +319,7 @@ fit.m1$print(max_rows = 100)
 
 draws.m1 <- fit.m1$draws(format = "matrix") %>%
   data.frame() %>%
-  select(a, bR, bW, sigma_site, sigma_house)
+  select(a, bR, bW, sigma_site)
 
 jpeg("outputs/misc/model_out_house_level_Rra_at_site.jpeg",
      width = 1000, height = 500, units = "px")
@@ -222,12 +338,13 @@ sum(draws.m1$bR < 0)/length(draws.m1$bR)
 # Generate parameter trace plots
 
 # Set palette for plotting
-palette <- adjustcolor(wesanderson::wes_palette("Darjeeling1"), alpha.f = 0.3)
+palette <- wesanderson::wes_palette("Darjeeling1") %>%
+  adjustcolor(alpha.f = 0.3)
 
 # Base figure
 p <- bayesplot::mcmc_trace(
   fit.m1$draws(format = "matrix"), 
-  pars = c("a", "bR", "bW", "sigma_site", "sigma_house"),
+  pars = c("a", "bR", "bW", "sigma_site"),
   size = 0.8,
   facet_args = list(ncol = 2)
 ) 
@@ -235,8 +352,7 @@ p <- bayesplot::mcmc_trace(
 # Relabel strip text
 levels(p$data$parameter) <- c(
   "grand mean", "*Rattus rattus* effect (present vs. absent)",
-  "season effect (wet vs. dry)", "σ (for site-level random effects)",
-  "σ (for house-level random effects)"
+  "season effect (wet vs. dry)", "σ (for site-level random effects)"
 )
 
 # Plot
@@ -250,7 +366,7 @@ p +
 
 ggsave(
   "outputs/misc/house_level_house_traps_Rra_at_site_trace_plots.jpeg",
-  width = 3500, height = 4000, units = "px"
+  width = 3500, height = 3000, units = "px"
 )
 
 
@@ -306,7 +422,7 @@ fit.m2$print(max_rows = 100)
 
 draws.m2 <- fit.m2$draws(format = "matrix") %>%
   data.frame() %>%
-  select(a, bR, bW, sigma_site, sigma_house)
+  select(a, bR, bW, sigma_site)
 
 jpeg("outputs/misc/model_out_house_level_Rra_at_house.jpeg",
      width = 1000, height = 500, units = "px")
@@ -325,12 +441,13 @@ sum(draws.m2$bR < 0)/length(draws.m2$bR)
 # Generate parameter trace plots
 
 # Set palette for plotting
-palette <- adjustcolor(wesanderson::wes_palette("Darjeeling1"), alpha.f = 0.3)
+palette <- wesanderson::wes_palette("Darjeeling1") %>%
+  adjustcolor(alpha.f = 0.3)
 
 # Base figure
 p <- bayesplot::mcmc_trace(
   fit.m2$draws(format = "matrix"), 
-  pars = c("a", "bR", "bW", "sigma_site", "sigma_house"),
+  pars = c("a", "bR", "bW", "sigma_site"),
   size = 0.8,
   facet_args = list(ncol = 2)
 ) 
@@ -338,8 +455,7 @@ p <- bayesplot::mcmc_trace(
 # Relabel strip text
 levels(p$data$parameter) <- c(
   "grand mean", "*Rattus rattus* effect (present vs. absent)",
-  "season effect (wet vs. dry)", "σ (for site-level random effects)",
-  "σ (for house-level random effects)"
+  "season effect (wet vs. dry)", "σ (for site-level random effects)"
 )
 
 # Plot
@@ -353,11 +469,11 @@ p +
 
 ggsave(
   "outputs/misc/house_level_house_traps_Rra_at_house_trace_plots.jpeg",
-  width = 3500, height = 4000, units = "px"
+  width = 3500, height = 3000, units = "px"
 )
 
 
-# Generate figure of the Rra_at_site posterior (have to do some of this 
+# Generate figure of the Rra_at_house posterior (have to do some of this 
 # manually)
 cutoff <- 0
 hist <- density(draws.m2$bR, from = -10, to = 10)
@@ -648,7 +764,7 @@ priors.list <- list(
 
 # Fit an occupancy model
 out <- spOccupancy::PGOcc(
-  occ.formula = ~ Rra_at_site + wet_season + (1|site_numeric) + (1|house_numeric), 
+  occ.formula = ~ Rra_at_site + wet_season + (1|site_numeric), 
   det.formula = ~ trap_count + cumulative_Mna_count, 
   data = data.list, 
   priors = priors.list,
@@ -724,7 +840,7 @@ hist %>%
   ggplot(aes(x = x, ymin = 0, ymax = y, fill = area)) +
   geom_ribbon() +
   geom_line(aes(y = y), linewidth = 1) +
-  geom_vline(xintercept = 0, lty = 2, size = 2) +
+  geom_vline(xintercept = 0, lty = 2, linewidth = 2) +
   xlab(expression(paste("Occupancy coefficient for ", italic("Rattus rattus"), " presence"))) +
   ylab("Density") +
   xlim(-6, 2) +

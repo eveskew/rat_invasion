@@ -59,6 +59,123 @@ ggplot(
 #==============================================================================
 
 
+# Generate figure illustrating informative prior vs. uninformative prior
+
+# Number of samples to generate from each distribution plus seed for
+# reproducibility
+n <- 1e6
+set.seed(8)
+
+# Generate samples from the informative prior and transform them into lambda
+informative.prior <- rnorm(n, mean = -3.1, sd = 1.1)
+informative.lambda <- exp(informative.prior)
+
+# Generate samples from the uninformative prior and transform them into lambda
+uninformative.prior <- rnorm(n, mean = 0, sd = 1)
+uninformative.lambda <- exp(uninformative.prior)
+
+# Package the samples together
+d <- data.frame(
+  value = c(
+    informative.prior, uninformative.prior,
+    informative.lambda, uninformative.lambda
+  ),
+  data_type = rep(
+    c("raw", "lambda"),
+    each = 2 * n
+  ),
+  prior_type = rep(
+    c("Normal(-3.1, 1.1)", "Normal(0, 1)",
+      "exp(Normal(-3.1, 1.1))", "exp(Normal(0, 1))"),
+    each = n
+  )
+)
+
+# Plot
+palette <- wesanderson::wes_palette("Moonrise2") %>%
+  adjustcolor(alpha.f = 0.5)
+palette.line <- wesanderson::wes_palette("Moonrise2") %>%
+  adjustcolor(alpha.f = 0.9)
+
+panel.a <- d %>%
+  filter(data_type == "raw") %>%
+  ggplot(aes(x = value)) +
+  geom_density(aes(fill = prior_type)) +
+  geom_vline(
+    xintercept = d %>%
+      filter(data_type == "raw", prior_type == "Normal(-3.1, 1.1)") %>%
+      pull(value) %>%
+      median(),
+    lty = 2,
+    linewidth = 1.5,
+    color = palette.line[1]
+  ) +
+  geom_vline(
+    xintercept = d %>%
+      filter(data_type == "raw", prior_type == "Normal(0, 1)") %>%
+      pull(value) %>%
+      median(),
+    lty = 2,
+    linewidth = 1.5,
+    color = palette.line[2]
+  ) +
+  xlab("Raw parameter value") +
+  ylab("Density") +
+  xlim(-10, 10) +
+  scale_fill_manual(values = palette) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 24),
+    legend.title = element_blank(),
+    legend.position = c(0.8, 0.85)
+  )
+
+panel.b <- d %>%
+  filter(data_type == "lambda") %>%
+  ggplot(aes(x = value)) +
+  geom_density(aes(fill = prior_type)) +
+  geom_vline(
+    xintercept = d %>%
+      filter(data_type == "lambda", prior_type == "exp(Normal(-3.1, 1.1))") %>%
+      pull(value) %>%
+      median(),
+    lty = 2,
+    linewidth = 1.5,
+    color = palette.line[1]
+  ) +
+  geom_vline(
+    xintercept = d %>%
+      filter(data_type == "lambda", prior_type == "exp(Normal(0, 1))") %>%
+      pull(value) %>%
+      median(),
+    lty = 2,
+    linewidth = 1.5,
+    color = palette.line[2]
+  ) +
+  xlab("Implied value of λ") +
+  ylab("Density") +
+  xlim(0, 2) +
+  scale_fill_manual(values = palette) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 24),
+    legend.title = element_blank(),
+    legend.position = c(0.8, 0.85)
+  )
+
+cowplot::plot_grid(
+  panel.a, panel.b,
+  nrow = 2,
+  labels = "auto",
+  label_size = 22
+)
+
+ggsave("outputs/misc/prior_comparison.jpeg", 
+       width = 3500, height = 4000, units = "px")
+
+#==============================================================================
+
+
 # Statistical analyses at visit level, all traps
 
 
@@ -114,7 +231,8 @@ dev.off()
 # Generate parameter trace plots
 
 # Set palette for plotting
-palette <- adjustcolor(wesanderson::wes_palette("Darjeeling1"), alpha.f = 0.3)
+palette <- wesanderson::wes_palette("Darjeeling1") %>%
+  adjustcolor(alpha.f = 0.3)
 
 # Base figure
 p <- bayesplot::mcmc_trace(
@@ -292,7 +410,8 @@ dev.off()
 # Generate parameter trace plots
 
 # Set palette for plotting
-palette <- adjustcolor(wesanderson::wes_palette("Darjeeling1"), alpha.f = 0.3)
+palette <- wesanderson::wes_palette("Darjeeling1") %>%
+  adjustcolor(alpha.f = 0.3)
 
 # Base figure
 p <- bayesplot::mcmc_trace(
@@ -815,7 +934,8 @@ dev.off()
 # Generate parameter trace plots
 
 # Set palette for plotting
-palette <- adjustcolor(wesanderson::wes_palette("Darjeeling1"), alpha.f = 0.3)
+palette <- wesanderson::wes_palette("Darjeeling1") %>%
+  adjustcolor(alpha.f = 0.3)
 
 # Base figure
 p <- bayesplot::mcmc_trace(
@@ -1201,7 +1321,7 @@ dat.ridges <- data.frame(
   arrange(species)
 
 # Plot
-palette <- adjustcolor(wesanderson::wes_palette("Darjeeling2"))
+palette <- wesanderson::wes_palette("Darjeeling2")
 
 dat.ridges %>%
   mutate(species = forcats::fct_rev(species)) %>%
