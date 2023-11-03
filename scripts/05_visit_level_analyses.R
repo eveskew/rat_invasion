@@ -1213,7 +1213,7 @@ draws.m3 <- fit.m3$draws(format = "matrix") %>%
   data.frame() %>%
   select(a, bM, bW, sigma_site)
 
-precis(draws.m3, prob = 0.9)
+precis(draws.m3, prob = 0.8)
 quantile(draws.m3$bM, c(0.05, 0.95))
 
 # Load Mma model
@@ -1241,7 +1241,7 @@ draws.m4 <- fit.m4$draws(format = "matrix") %>%
   data.frame() %>%
   select(a, bM, bW, sigma_site)
 
-precis(draws.m4, prob = 0.9)
+precis(draws.m4, prob = 0.8)
 quantile(draws.m4$bM, c(0.05, 0.95))
 
 # Load Pda model
@@ -1269,7 +1269,7 @@ draws.m5 <- fit.m5$draws(format = "matrix") %>%
   data.frame() %>%
   select(a, bP, bW, sigma_site)
 
-precis(draws.m5, prob = 0.9)
+precis(draws.m5, prob = 0.8)
 quantile(draws.m5$bP, c(0.05, 0.95))
 
 # Load Pro model
@@ -1297,7 +1297,7 @@ draws.m6 <- fit.m6$draws(format = "matrix") %>%
   data.frame() %>%
   select(a, bP, bW, sigma_site)
 
-precis(draws.m6, prob = 0.9)
+precis(draws.m6, prob = 0.8)
 quantile(draws.m6$bP, c(0.05, 0.95))
 
 
@@ -1329,7 +1329,7 @@ dat.ridges %>%
   geom_vline(xintercept = 0, linewidth = 2, lty = 2) +
   ggridges::stat_density_ridges(
     quantile_lines = TRUE, 
-    quantiles = c(0.05, 0.95), 
+    quantiles = c(0.10, 0.90), 
     alpha = 0.6
   ) +
   scale_fill_manual(values = palette) +
