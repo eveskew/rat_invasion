@@ -244,7 +244,7 @@ p <- bayesplot::mcmc_trace(
 # Relabel strip text
 levels(p$data$parameter) <- c(
   "grand mean", "*Rattus rattus* effect (present vs. absent)",
-  "season effect (wet vs. dry)", "σ (for site-level random effects)"
+  "season effect (wet vs. dry)", "σ (for site-level varying intercepts)"
 )
 
 # Plot
@@ -423,7 +423,7 @@ p <- bayesplot::mcmc_trace(
 # Relabel strip text
 levels(p$data$parameter) <- c(
   "grand mean", "*Rattus rattus* effect (present vs. absent)",
-  "season effect (wet vs. dry)", "σ (for site-level random effects)"
+  "season effect (wet vs. dry)", "σ (for site-level varying intercepts)"
 )
 
 # Plot
@@ -947,7 +947,7 @@ p <- bayesplot::mcmc_trace(
 # Relabel strip text
 levels(p$data$parameter) <- c(
   "grand mean", "*Rattus rattus* effect (present vs. absent)",
-  "season effect (wet vs. dry)", "σ (for site-level random effects)"
+  "season effect (wet vs. dry)", "σ (for site-level varying intercepts)"
 )
 
 # Plot
