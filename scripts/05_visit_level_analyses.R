@@ -122,7 +122,13 @@ panel.a <- d %>%
   xlab("Raw parameter value") +
   ylab("Density") +
   xlim(-10, 10) +
-  scale_fill_manual(values = palette) +
+  scale_fill_manual(
+    values = palette,
+    labels = c(
+      "Informative prior:\nNormal(-3.1, 1.1)", 
+      "Uninformative prior:\nNormal(0, 1)"
+    )
+  ) +
   theme_minimal() +
   theme(
     text = element_text(size = 24),
@@ -717,7 +723,7 @@ c.house <- ggplot(
 # wet/dry seasons, Rattus rattus present/absent
 preds.all <- data.frame(
   season = rep(
-    c("Wet season", "Dry season"), 
+    c("wet season", "dry season"), 
     each = length(draws.m1$a)*2
   ),
   site_status = rep(
@@ -737,7 +743,7 @@ preds.all <- data.frame(
 # wet/dry seasons, Rattus rattus present/absent
 preds.house <- data.frame(
   season = rep(
-    c("Wet season", "Dry season"), 
+    c("wet season", "dry season"), 
     each = length(draws.m2$a)*2
   ),
   site_status = rep(
@@ -790,7 +796,8 @@ d.all <- preds.all %>%
   geom_linerange(
     aes(ymin = lower99, ymax = upper99), 
     position = position_dodge2(width = val.dodge), 
-    linewidth = 1
+    linewidth = 1,
+    key_glyph = "rect"
   ) +
   geom_linerange(
     aes(ymin = lower90, ymax = upper90), 
@@ -805,10 +812,10 @@ d.all <- preds.all %>%
   scale_color_manual(values = c("wheat3", "steelblue")) +
   theme(
     text = element_text(size = 21),
-    legend.position = "none"
-    # legend.title = element_blank(),
-    # legend.position = c(0.75, 0.80),
-    # legend.background = element_rect(fill = "white", colour = 0)
+    legend.title = element_blank(),
+    legend.text = element_text(size = 18),
+    legend.position = c(0.7, 0.80),
+    legend.background = element_rect(fill = "white", colour = 0)
   )
 
 cowplot::plot_grid(
@@ -840,7 +847,8 @@ d.house <- preds.house %>%
   geom_linerange(
     aes(ymin = lower99, ymax = upper99), 
     position = position_dodge2(width = val.dodge), 
-    linewidth = 1
+    linewidth = 1,
+    key_glyph = "rect"
   ) +
   geom_linerange(
     aes(ymin = lower90, ymax = upper90), 
@@ -855,7 +863,10 @@ d.house <- preds.house %>%
   scale_color_manual(values = c("wheat3", "steelblue")) +
   theme(
     text = element_text(size = 21),
-    legend.position = "none"
+    legend.title = element_blank(),
+    legend.text = element_text(size = 18),
+    legend.position = c(0.7, 0.75),
+    legend.background = element_rect(fill = "white", colour = 0)
   )
 
 cowplot::plot_grid(
@@ -1104,7 +1115,7 @@ spill.map.house <- ggplot() +
 
 preds <- data.frame(
   season = rep(
-    c("Wet season", "Dry season"), 
+    c("wet season", "dry season"), 
     each = length(draws.spill$a)*2
   ),
   site_status = rep(
@@ -1134,7 +1145,8 @@ spill.results.house <- preds %>%
   geom_linerange(
     aes(ymin = lower99, ymax = upper99), 
     position = position_dodge2(width = val.dodge), 
-    linewidth = 1
+    linewidth = 1,
+    key_glyph = "rect"
   ) +
   geom_linerange(
     aes(ymin = lower90, ymax = upper90), 
@@ -1149,7 +1161,10 @@ spill.results.house <- preds %>%
   scale_color_manual(values = c("wheat3", "steelblue")) +
   theme(
     text = element_text(size = 21),
-    legend.position = "none"
+    legend.title = element_blank(),
+    legend.text = element_text(size = 18),
+    legend.position = c(0.7, 0.85),
+    legend.background = element_rect(fill = "white", colour = 0)
   )
 
 cowplot::plot_grid(

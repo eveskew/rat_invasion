@@ -939,7 +939,7 @@ ggsave("outputs/misc/observed_predicted_Mna_site_level_occupancy.jpeg",
 
 preds <- data.frame(
   season = rep(
-    c("Wet season", "Dry season"), 
+    c("wet season", "dry season"), 
     each = length(out$beta.samples[,1])*2
   ),
   site_status = rep(
@@ -1031,7 +1031,8 @@ occ.plot <- preds %>%
   geom_linerange(
     aes(ymin = lower99, ymax = upper99), 
     position = position_dodge2(width = val.dodge),
-    linewidth = 1
+    linewidth = 1,
+    key_glyph = "rect"
   ) +
   geom_linerange(
     aes(ymin = lower90, ymax = upper90), 
@@ -1046,7 +1047,10 @@ occ.plot <- preds %>%
   scale_color_manual(values = c("wheat3", "steelblue")) +
   theme(
     text = element_text(size = 21),
-    legend.position = "none"
+    legend.title = element_blank(),
+    legend.text = element_text(size = 12),
+    legend.position = c(0.7, 0.82),
+    legend.background = element_rect(fill = "white", colour = 0)
   )
 
 cowplot::plot_grid(
