@@ -1156,14 +1156,14 @@ spill.results.house <- preds %>%
   geom_point(position = position_dodge2(width = val.dodge), size = 5) +
   xlab(expression(paste(italic("Rattus rattus"), " status at site"))) +
   ylab(expression(atop(paste("Lassa-positive ", italic("Mastomys natalensis")), "catch per trap (average site)"))) +
-  scale_y_continuous(breaks = breaks.spill, limits = c(0, 0.016)) +
+  scale_y_continuous(breaks = breaks.spill, limits = c(0, 0.012)) +
   theme_minimal() +
   scale_color_manual(values = c("wheat3", "steelblue")) +
   theme(
     text = element_text(size = 21),
     legend.title = element_blank(),
     legend.text = element_text(size = 18),
-    legend.position = c(0.7, 0.85),
+    legend.position = c(0.7, 0.82),
     legend.background = element_rect(fill = "white", colour = 0)
   )
 

@@ -183,8 +183,33 @@ capture.dat <- capture.dat %>%
       TRUE ~ NA_character_
     ),
     sex = substr(sex, 1, 1),
-    habitat_code = substr(track_id, 1, 1),
+    habitat_code = substr(track_id, 1, 1)
   )
+
+# Restrict positive Lassa results to only those later confirmed via sequencing
+dim(capture.dat)
+sum(capture.dat$lassa)
+
+seq.table <- read_csv("data/raw/sequencing_tables/SL_Mna_LASV_sequencing_table.csv")
+capture.dat <- left_join(
+  capture.dat,
+  seq.table %>%
+    select(-date, -L_accession) %>%
+    rename(track_id = line_number) %>%
+    mutate(animal_id = as.numeric(animal_id)),
+  by = c("site", "species", "animal_id", "track_id")
+) %>%
+  mutate(
+    lassa = ifelse(
+      lassa == 1 & is.na(S_accession),
+      0,
+      lassa
+    )
+  ) %>%
+  select(-S_accession)
+
+dim(capture.dat)
+sum(capture.dat$lassa)
 
 # Create column with three-letter species name (Mastomys natalensis = Mna)
 return_species_code <- function(x) {

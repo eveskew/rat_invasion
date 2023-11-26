@@ -950,8 +950,8 @@ mc.b <- preds %>%
   ungroup() %>%
   mutate(data_timing = forcats::fct_rev(data_timing)) %>%
   ggplot(aes(x = data_timing, y = mean, color = data_timing)) +
-  geom_linerange(aes(ymin = lower99, ymax = upper99), size = 1) +
-  geom_linerange(aes(ymin = lower90, ymax = upper90), size = 3) +
+  geom_linerange(aes(ymin = lower99, ymax = upper99), linewidth = 1) +
+  geom_linerange(aes(ymin = lower90, ymax = upper90), linewidth = 3) +
   geom_point(size = 5) +
   xlab("") +
   ylab(expression(atop(italic("Mastomys natalensis"), "catch per trap (average site)"))) +
@@ -1194,7 +1194,7 @@ spill.results.house <- preds %>%
   geom_point(size = 5) +
   xlab(expression(paste(italic("Rattus rattus"), " status at site"))) +
   ylab(expression(atop(paste("Lassa-positive ", italic("Mastomys natalensis")), "catch per trap (average site)"))) +
-  scale_y_continuous(breaks = breaks.spill, limits = c(0, 0.016)) +
+  scale_y_continuous(breaks = breaks.spill, limits = c(0, 0.012)) +
   theme_minimal() +
   scale_color_manual(values = c("darkgrey", "darkred")) +
   theme(

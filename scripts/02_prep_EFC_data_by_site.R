@@ -204,6 +204,29 @@ capture.dat$Lens <- as.numeric(capture.dat$Lens)
 # Row of "capture.dat" with Line number "TA0104X1" should be TA010401
 capture.dat[capture.dat$Line=='TA0104X1', 'Line'] <- 'TA010401'
 
+# Restrict positive Lassa results to only those later confirmed via sequencing
+dim(capture.dat)
+sum(capture.dat$Lassa, na.rm = T)
+
+seq.table <- read_csv("data/raw/sequencing_tables/Guinea_Mna_LASV_sequencing_table.csv")
+capture.dat <- left_join(
+  capture.dat,
+  seq.table %>%
+    select(-date, -species, -indoor_outdoor),
+  by = c("Site" = "site", `N°viro` = "animal_id")
+) %>%
+  mutate(
+    Lassa = ifelse(
+      Lassa == 1 & is.na(nucleoprotein_accession),
+      0,
+      Lassa
+    )
+  ) %>%
+  select(-nucleoprotein_accession)
+
+dim(capture.dat)
+sum(capture.dat$Lassa, na.rm = T)
+
 
 # Add full species names 
 
