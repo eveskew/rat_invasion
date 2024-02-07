@@ -371,9 +371,14 @@ ggsave("outputs/misc/predictive_check_visit_level_all_traps_Rra_at_site.jpeg",
 stan.dat <- list(
   N = nrow(visit.dat.only.houses),
   n_Mna = visit.dat.only.houses$n_Mna,
+  n_Mna_pos_lassa = visit.dat.only.houses$n_Mna_pos_lassa,
   n_Rra = visit.dat.only.houses$n_Rra,
   n_Rra_s = standardize(visit.dat.only.houses$n_Rra),
   Rra_at_site = visit.dat.only.houses$Rra_at_site,
+  Mer_at_site = visit.dat.only.houses$Mer_at_site,
+  Mma_at_site = visit.dat.only.houses$Mma_at_site,
+  Pda_at_site = visit.dat.only.houses$Pda_at_site,
+  Pro_at_site = visit.dat.only.houses$Pro_at_site,
   wet_season = visit.dat.only.houses$wet_season,
   tot_traps = visit.dat.only.houses$tot_traps,
   log_tot_traps = log(visit.dat.only.houses$tot_traps),
@@ -892,21 +897,6 @@ ggsave(
 # What is the range of catch per trap of Lassa-positive Mastomys natalensis?
 summary(visit.dat.only.houses$n_Mna_pos_lassa/visit.dat.only.houses$tot_traps)
 
-# Package data for Stan models, with only houses included
-stan.dat <- list(
-  N = nrow(visit.dat.only.houses),
-  n_Mna = visit.dat.only.houses$n_Mna,
-  n_Mna_pos_lassa = visit.dat.only.houses$n_Mna_pos_lassa,
-  n_Rra = visit.dat.only.houses$n_Rra,
-  n_Rra_s = standardize(visit.dat.only.houses$n_Rra),
-  Rra_at_site = visit.dat.only.houses$Rra_at_site,
-  wet_season = visit.dat.only.houses$wet_season,
-  tot_traps = visit.dat.only.houses$tot_traps,
-  log_tot_traps = log(visit.dat.only.houses$tot_traps),
-  N_site = n_distinct(visit.dat.only.houses$site),
-  site = as.numeric(as.factor(visit.dat.only.houses$site))
-)
-
 # Load model
 spill.mod <- cmdstan_model("stan_models/spillover_risk_visit_level.stan")
 
@@ -1184,24 +1174,6 @@ ggsave(
 
 
 # Statistical analyses of other rodent species at visit level, only house traps
-
-# Package data for Stan models, with only houses included
-stan.dat <- list(
-  N = nrow(visit.dat.only.houses),
-  n_Mna = visit.dat.only.houses$n_Mna,
-  n_Rra = visit.dat.only.houses$n_Rra,
-  n_Rra_s = standardize(visit.dat.only.houses$n_Rra),
-  Rra_at_site = visit.dat.only.houses$Rra_at_site,
-  Mer_at_site = visit.dat.only.houses$Mer_at_site,
-  Mma_at_site = visit.dat.only.houses$Mma_at_site,
-  Pda_at_site = visit.dat.only.houses$Pda_at_site,
-  Pro_at_site = visit.dat.only.houses$Pro_at_site,
-  wet_season = visit.dat.only.houses$wet_season,
-  tot_traps = visit.dat.only.houses$tot_traps,
-  log_tot_traps = log(visit.dat.only.houses$tot_traps),
-  N_site = n_distinct(visit.dat.only.houses$site),
-  site = as.numeric(as.factor(visit.dat.only.houses$site))
-)
 
 # Load Mer model
 Mer.mod <- cmdstan_model("stan_models/visit_model_Mer_at_site.stan")
