@@ -20,4 +20,4 @@ Eskew, E.A., B.H. Bird, B.M. Ghersi, J. Bangura, A.J. Basinski, E. Amara, M.A. B
   - A visit-level model of _Mastomys natalensis_ count with a _Rattus rattus_ site-level predictor: [`visit_model_Rra_at_site.stan`](/stan_models/visit_model_Rra_at_site.stan)
   - A house-level model of _Mastomys natalensis_ count with a _Rattus rattus_ site-level predictor: [`house_model_Rra_at_site.stan`](/stan_models/house_model_Rra_at_site.stan)
   - An alternative house-level model of _Mastomys natalensis_ count with a _Rattus rattus_ house-level predictor: [`house_model_Rra_at_house.stan`](/stan_models/house_model_Rra_at_house.stan)
-  - A visit-level spillover risk model of Lassa-positive _Mastomys natalensis_ count with a _Rattus rattus_ site-level predictor: [`spillover_risk_visit_level.stan`](/stan_models/spillover_risk_visit_level.stan)
+  - A visit-level spillover risk model of Lassa-positive _Mastomys natalensis_ count with a _Rattus rattus_ site-level predictor: [`spillover_risk_visit_level_Rra_at_site.stan`](/stan_models/spillover_risk_visit_level_Rra_at_site.stan)
