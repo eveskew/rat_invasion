@@ -1189,8 +1189,8 @@ spill.results.house <- preds %>%
   ) %>%
   ungroup() %>%
   ggplot(aes(x = site_status, y = mean, color = site_status)) +
-  geom_linerange(aes(ymin = lower99, ymax = upper99), size = 1) +
-  geom_linerange(aes(ymin = lower90, ymax = upper90), size = 3) +
+  geom_linerange(aes(ymin = lower99, ymax = upper99), linewidth = 1) +
+  geom_linerange(aes(ymin = lower90, ymax = upper90), linewidth = 3) +
   geom_point(size = 5) +
   xlab(expression(paste(italic("Rattus rattus"), " status at site"))) +
   ylab(expression(atop(paste("Lassa-positive ", italic("Mastomys natalensis")), "catch per trap (average site)"))) +
