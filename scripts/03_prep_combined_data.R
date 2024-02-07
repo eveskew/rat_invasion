@@ -38,7 +38,7 @@ summary.trap.dat <- read_csv("data/clean/PREEMPT/trap_metadata.csv") %>%
 # Data on rodent captures across all sites
 capture.dat <- read_csv("data/clean/PREEMPT/PREEMPT_capture_data.csv")
 
-# Summarized data on rodent capture at all sites: needed for site-level
+# Summarized data on rodent captures at all sites: needed for site-level
 # lat/long information
 agg <- read_csv("data/clean/PREEMPT/aggregated_PREEMPT_capture_data.csv")
 
@@ -46,7 +46,7 @@ agg <- read_csv("data/clean/PREEMPT/aggregated_PREEMPT_capture_data.csv")
 
 
 # Combine PREEMPT capture data with EFC data to see how many total captures 
-# there were of each species in each country
+# there were of each rodent species in each country
 
 capture.dat %>%
   select(species, habitat_code) %>%
@@ -267,7 +267,7 @@ sl.visit.dat <- track.level.captures %>%
   # add wet season variable
   mutate(
     month = lubridate::month(date),
-    wet_season = ifelse(month %in% 5:10, 1, 0),
+    wet_season = ifelse(month %in% 5:11, 1, 0),
     # assume Talama, visit 1 occurred in wet season even though date is missing
     wet_season = ifelse(site == "Talama" & visit == "1", 1, wet_season)
   ) %>%
@@ -334,7 +334,7 @@ sl.visit.dat.only.houses <- track.level.captures %>%
   # add wet season variable
   mutate(
     month = lubridate::month(date),
-    wet_season = ifelse(month %in% 5:10, 1, 0),
+    wet_season = ifelse(month %in% 5:11, 1, 0),
     # assume Talama, visit 1 occurred in wet season even though date is missing
     wet_season = ifelse(site == "Talama" & visit == "1", 1, wet_season)
   ) %>%
@@ -546,7 +546,7 @@ guinea.visit.dat <- EFC.agg %>%
   mutate(
     month = substr(visit, 1, 3),
     month = match(month, month.abb),
-    wet_season = ifelse(month %in% 5:10, 1, 0)
+    wet_season = ifelse(month %in% 5:11, 1, 0)
   ) %>%
   # tag as EFC data
   mutate(data_source = rep("EFC", nrow(.))) %>%
@@ -624,7 +624,7 @@ guinea.visit.dat.only.houses <- EFC.agg %>%
   mutate(
     month = substr(visit, 1, 3),
     month = match(month, month.abb),
-    wet_season = ifelse(month %in% 5:10, 1, 0)
+    wet_season = ifelse(month %in% 5:11, 1, 0)
   ) %>%
   # tag as EFC data
   mutate(data_source = rep("EFC", nrow(.)))
@@ -917,7 +917,9 @@ ggplot() +
                aes(x = longitude, y = latitude, xend = -13.5784, yend = 9.6412)) +
   theme_minimal()
 
+
 # Plot distance relationships
+
 site.dat %>%
   ggplot(aes(x = distance_to_coast/1000, y = Mna_per_trap)) +
   geom_point(aes(color = data_source)) +
