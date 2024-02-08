@@ -898,7 +898,7 @@ ggsave(
 summary(visit.dat.only.houses$n_Mna_pos_lassa/visit.dat.only.houses$tot_traps)
 
 # Load model
-spill.mod <- cmdstan_model("stan_models/spillover_risk_visit_level.stan")
+spill.mod <- cmdstan_model("stan_models/spillover_risk_visit_level_Rra_at_site.stan")
 
 # Fit model
 fit.spill <- spill.mod$sample(
@@ -1323,6 +1323,7 @@ dat.ridges %>%
   theme_minimal() +
   xlab("Parameter Value") +
   ylab("") +
+  xlim(-5, 5) +
   theme(
     text = element_text(size = 21),
     axis.text.y = element_text(face = "italic"),
@@ -1330,7 +1331,175 @@ dat.ridges %>%
   )
 
 ggsave(
-  "outputs/misc/species_presence_effect_posteriors.jpeg", 
+  "outputs/misc/species_presence_effect_posteriors_visit_level.jpeg", 
+  width = 3000, 
+  height = 2000, 
+  unit = "px"
+)
+
+#==============================================================================
+
+
+# Statistical analyses of other rodent species in spillover risk model (visit
+# level, only house traps)
+
+# Load Mer model
+Mer.mod <- cmdstan_model("stan_models/spillover_risk_visit_level_Mer_at_site.stan")
+
+# Fit model
+fit.spill2 <- Mer.mod$sample(
+  data = stan.dat, 
+  chains = 4, 
+  parallel_chains = 4,
+  iter_warmup = 2500,
+  iter_sampling = 5000,
+  adapt_delta = 0.99,
+  seed = 8
+)
+
+# Save/load fit model object
+fit.spill2$save_object("saved_models/spillover_risk_visit_level_Mer_at_site.RDS")
+fit.spill2 <- readRDS("saved_models/spillover_risk_visit_level_Mer_at_site.RDS")
+
+fit.spill2$diagnostic_summary()
+fit.spill2$print(max_rows = 100)
+
+draws.spill2 <- fit.spill2$draws(format = "matrix") %>%
+  data.frame() %>%
+  select(a, bM, bW, sigma_site)
+
+precis(draws.spill2, prob = 0.8)
+quantile(draws.spill2$bM, c(0.05, 0.95))
+
+# Load Mma model
+Mma.mod <- cmdstan_model("stan_models/spillover_risk_visit_level_Mma_at_site.stan")
+
+# Fit model
+fit.spill3 <- Mma.mod$sample(
+  data = stan.dat, 
+  chains = 4, 
+  parallel_chains = 4,
+  iter_warmup = 2500,
+  iter_sampling = 5000,
+  adapt_delta = 0.99,
+  seed = 8
+)
+
+# Save/load fit model object
+fit.spill3$save_object("saved_models/spillover_risk_visit_level_Mma_at_site.RDS")
+fit.spill3 <- readRDS("saved_models/spillover_risk_visit_level_Mma_at_site.RDS")
+
+fit.spill3$diagnostic_summary()
+fit.spill3$print(max_rows = 100)
+
+draws.spill3 <- fit.spill3$draws(format = "matrix") %>%
+  data.frame() %>%
+  select(a, bM, bW, sigma_site)
+
+precis(draws.spill3, prob = 0.8)
+quantile(draws.spill3$bM, c(0.05, 0.95))
+
+# Load Pda model
+Pda.mod <- cmdstan_model("stan_models/spillover_risk_visit_level_Pda_at_site.stan")
+
+# Fit model
+fit.spill4 <- Pda.mod$sample(
+  data = stan.dat, 
+  chains = 4, 
+  parallel_chains = 4,
+  iter_warmup = 2500,
+  iter_sampling = 5000,
+  adapt_delta = 0.99,
+  seed = 8
+)
+
+# Save/load fit model object
+fit.spill4$save_object("saved_models/spillover_risk_visit_level_Pda_at_site.RDS")
+fit.spill4 <- readRDS("saved_models/spillover_risk_visit_level_Pda_at_site.RDS")
+
+fit.spill4$diagnostic_summary()
+fit.spill4$print(max_rows = 100)
+
+draws.spill4 <- fit.spill4$draws(format = "matrix") %>%
+  data.frame() %>%
+  select(a, bP, bW, sigma_site)
+
+precis(draws.spill4, prob = 0.8)
+quantile(draws.spill4$bP, c(0.05, 0.95))
+
+# Load Pro model
+Pro.mod <- cmdstan_model("stan_models/spillover_risk_visit_level_Pro_at_site.stan")
+
+# Fit model
+fit.spill5 <- Pro.mod$sample(
+  data = stan.dat, 
+  chains = 4, 
+  parallel_chains = 4,
+  iter_warmup = 2500,
+  iter_sampling = 5000,
+  adapt_delta = 0.99,
+  seed = 8
+)
+
+# Save/load fit model object
+fit.spill5$save_object("saved_models/spillover_risk_visit_level_Pro_at_site.RDS")
+fit.spill5 <- readRDS("saved_models/spillover_risk_visit_level_Pro_at_site.RDS")
+
+fit.spill5$diagnostic_summary()
+fit.spill5$print(max_rows = 100)
+
+draws.spill5 <- fit.spill5$draws(format = "matrix") %>%
+  data.frame() %>%
+  select(a, bP, bW, sigma_site)
+
+precis(draws.spill5, prob = 0.8)
+quantile(draws.spill5$bP, c(0.05, 0.95))
+
+
+# Generate a figure of all rodent presence/absence effect posteriors
+
+# Package data from all species-specific models
+dat.ridges <- data.frame(
+  species = rep(
+    c("Rattus rattus", "Mastomys erythroleucus", "Mus mattheyi", 
+      "Praomys daltoni", "Praomys rostratus"),
+    each = length(draws.spill$bR)
+  ),
+  value = c(
+    draws.spill$bR,
+    draws.spill2$bM,
+    draws.spill3$bM,
+    draws.spill4$bP,
+    draws.spill5$bP
+  )
+) %>%
+  arrange(species)
+
+# Plot
+palette <- wesanderson::wes_palette("Darjeeling2")
+
+dat.ridges %>%
+  mutate(species = forcats::fct_rev(species)) %>%
+  ggplot(aes(x = value, y = species, fill = rev(species))) +
+  geom_vline(xintercept = 0, linewidth = 2, lty = 2) +
+  ggridges::stat_density_ridges(
+    quantile_lines = TRUE, 
+    quantiles = c(0.10, 0.90), 
+    alpha = 0.6
+  ) +
+  scale_fill_manual(values = palette) +
+  theme_minimal() +
+  xlab("Parameter Value") +
+  ylab("") +
+  xlim(-5, 5) +
+  theme(
+    text = element_text(size = 21),
+    axis.text.y = element_text(face = "italic"),
+    legend.position = "none"
+  )
+
+ggsave(
+  "outputs/misc/species_presence_effect_posteriors_spillover_risk.jpeg", 
   width = 3000, 
   height = 2000, 
   unit = "px"
