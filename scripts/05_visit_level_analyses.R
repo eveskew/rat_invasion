@@ -2,6 +2,7 @@ library(tidyverse)
 library(rethinking)
 library(rnaturalearth)
 library(sf)
+library(assertthat)
 
 source("R/functions.R")
 
@@ -184,27 +185,32 @@ ggsave("outputs/misc/prior_comparison.jpeg",
 
 # Statistical analyses at visit level, all traps
 
-
-# Package data for Stan models, with all traps included
-stan.dat <- list(
+# Package data for Stan models of Rra effect, with all traps included
+stan.dat.all.traps.Rra <- list(
   N = nrow(visit.dat),
   n_Mna = visit.dat$n_Mna,
   n_Rra = visit.dat$n_Rra,
   n_Rra_s = standardize(visit.dat$n_Rra),
-  Rra_at_site = visit.dat$Rra_at_site,
+  rodent_at_site = visit.dat$Rra_at_site,
   wet_season = visit.dat$wet_season,
   tot_traps = visit.dat$tot_traps,
   log_tot_traps = log(visit.dat$tot_traps),
   N_site = n_distinct(visit.dat$site),
-  site = as.numeric(as.factor(visit.dat$site))
+  site = as.numeric(as.factor(visit.dat$site)),
+  N_visit = paste0(visit.dat$site, "-", visit.dat$visit_mod) %>%
+    n_distinct(),
+  visit = paste0(visit.dat$site, "-", visit.dat$visit_mod) %>%
+    as.factor() %>%
+    as.numeric()
 )
+assert_that(nrow(visit.dat) == stan.dat.all.traps.Rra$N_visit)
 
-# Load model
-visit.mod.Rra.at.site <- cmdstan_model("stan_models/visit_model_Rra_at_site.stan")
+# Load visit-level model
+visit.mod <- cmdstan_model("stan_models/visit_model.stan")
 
 # Fit model
-fit.m1 <- visit.mod.Rra.at.site$sample(
-  data = stan.dat, 
+fit.m1 <- visit.mod$sample(
+  data = stan.dat.all.traps.Rra, 
   chains = 4, 
   parallel_chains = 4,
   iter_warmup = 2500,
@@ -222,7 +228,7 @@ fit.m1$print(max_rows = 100)
 
 draws.m1 <- fit.m1$draws(format = "matrix") %>%
   data.frame() %>%
-  select(a, bR, bW, sigma_site)
+  select(a, bR, bW, sigma_site, sigma_visit)
 
 jpeg("outputs/misc/model_out_visit_level_all_traps_Rra_at_site.jpeg",
      width = 1000, height = 500, units = "px")
@@ -243,14 +249,16 @@ palette <- wesanderson::wes_palette("Darjeeling1") %>%
 # Base figure
 p <- bayesplot::mcmc_trace(
   fit.m1$draws(format = "matrix"), 
-  pars = c("a", "bR", "bW", "sigma_site"),
-  size = 0.8
+  pars = c("a", "bR", "bW", "sigma_site", "sigma_visit"),
+  size = 0.8,
+  facet_args = list(ncol = 2)
 ) 
 
 # Relabel strip text
 levels(p$data$parameter) <- c(
   "grand mean", "*Rattus rattus* effect (present vs. absent)",
-  "season effect (wet vs. dry)", "σ (for site-level varying intercepts)"
+  "season effect (wet vs. dry)", "σ (for site-level varying intercepts)",
+  "σ (for visit-level varying intercepts)"
 )
 
 # Plot
@@ -264,7 +272,7 @@ p +
 
 ggsave(
   "outputs/misc/visit_level_all_traps_trace_plots.jpeg",
-  width = 3500, height = 3000, units = "px"
+  width = 3500, height = 4000, units = "px"
 )
 
 
@@ -367,28 +375,30 @@ ggsave("outputs/misc/predictive_check_visit_level_all_traps_Rra_at_site.jpeg",
 
 # Statistical analyses at visit level, only house traps
 
-# Package data for Stan models, with only houses included
-stan.dat <- list(
+# Package data for Stan models of Rra effect, with only house traps included
+stan.dat.house.traps.Rra <- list(
   N = nrow(visit.dat.only.houses),
   n_Mna = visit.dat.only.houses$n_Mna,
   n_Mna_pos_lassa = visit.dat.only.houses$n_Mna_pos_lassa,
   n_Rra = visit.dat.only.houses$n_Rra,
   n_Rra_s = standardize(visit.dat.only.houses$n_Rra),
-  Rra_at_site = visit.dat.only.houses$Rra_at_site,
-  Mer_at_site = visit.dat.only.houses$Mer_at_site,
-  Mma_at_site = visit.dat.only.houses$Mma_at_site,
-  Pda_at_site = visit.dat.only.houses$Pda_at_site,
-  Pro_at_site = visit.dat.only.houses$Pro_at_site,
+  rodent_at_site = visit.dat.only.houses$Rra_at_site,
   wet_season = visit.dat.only.houses$wet_season,
   tot_traps = visit.dat.only.houses$tot_traps,
   log_tot_traps = log(visit.dat.only.houses$tot_traps),
   N_site = n_distinct(visit.dat.only.houses$site),
-  site = as.numeric(as.factor(visit.dat.only.houses$site))
+  site = as.numeric(as.factor(visit.dat.only.houses$site)),
+  N_visit = paste0(visit.dat.only.houses$site, "-", visit.dat.only.houses$visit_mod) %>%
+    n_distinct(),
+  visit = paste0(visit.dat.only.houses$site, "-", visit.dat.only.houses$visit_mod) %>%
+    as.factor() %>%
+    as.numeric()
 )
+assert_that(nrow(visit.dat.only.houses) == stan.dat.house.traps.Rra$N_visit)
 
 # Fit model
-fit.m2 <- visit.mod.Rra.at.site$sample(
-  data = stan.dat, 
+fit.m2 <- visit.mod$sample(
+  data = stan.dat.house.traps.Rra, 
   chains = 4, 
   parallel_chains = 4,
   iter_warmup = 2500,
@@ -406,7 +416,7 @@ fit.m2$print(max_rows = 100)
 
 draws.m2 <- fit.m2$draws(format = "matrix") %>%
   data.frame() %>%
-  select(a, bR, bW, sigma_site)
+  select(a, bR, bW, sigma_site, sigma_visit)
 
 jpeg("outputs/misc/model_out_visit_level_house_traps_Rra_at_site.jpeg",
      width = 1000, height = 500, units = "px")
@@ -427,14 +437,16 @@ palette <- wesanderson::wes_palette("Darjeeling1") %>%
 # Base figure
 p <- bayesplot::mcmc_trace(
   fit.m2$draws(format = "matrix"), 
-  pars = c("a", "bR", "bW", "sigma_site"),
-  size = 0.8
+  pars = c("a", "bR", "bW", "sigma_site", "sigma_visit"),
+  size = 0.8,
+  facet_args = list(ncol = 2)
 ) 
 
 # Relabel strip text
 levels(p$data$parameter) <- c(
   "grand mean", "*Rattus rattus* effect (present vs. absent)",
-  "season effect (wet vs. dry)", "σ (for site-level varying intercepts)"
+  "season effect (wet vs. dry)", "σ (for site-level varying intercepts)",
+  "σ (for visit-level varying intercepts)"
 )
 
 # Plot
@@ -448,7 +460,7 @@ p +
 
 ggsave(
   "outputs/misc/visit_level_house_traps_trace_plots.jpeg",
-  width = 3500, height = 3000, units = "px"
+  width = 3500, height = 4000, units = "px"
 )
 
 
@@ -897,12 +909,12 @@ ggsave(
 # What is the range of catch per trap of Lassa-positive Mastomys natalensis?
 summary(visit.dat.only.houses$n_Mna_pos_lassa/visit.dat.only.houses$tot_traps)
 
-# Load model
-spill.mod <- cmdstan_model("stan_models/spillover_risk_visit_level_Rra_at_site.stan")
+# Load spillover risk model
+spill.mod <- cmdstan_model("stan_models/spillover_risk_visit_level.stan")
 
-# Fit model
+# Fit model including Rra effect
 fit.spill <- spill.mod$sample(
-  data = stan.dat, 
+  data = stan.dat.house.traps.Rra, 
   chains = 4, 
   parallel_chains = 4,
   iter_warmup = 2500,
@@ -912,15 +924,15 @@ fit.spill <- spill.mod$sample(
 )
 
 # Save/load fit model object
-fit.spill$save_object("saved_models/spillover_risk_visit_level.RDS")
-fit.spill <- readRDS("saved_models/spillover_risk_visit_level.RDS")
+fit.spill$save_object("saved_models/spillover_risk_visit_level_Rra_at_site.RDS")
+fit.spill <- readRDS("saved_models/spillover_risk_visit_level_Rra_at_site.RDS")
 
 fit.spill$diagnostic_summary()
 fit.spill$print(max_rows = 100)
 
 draws.spill <- fit.spill$draws(format = "matrix") %>%
   data.frame() %>%
-  select(a, bR, bW, sigma_site)
+  select(a, bR, bW, sigma_site, sigma_visit)
 
 jpeg("outputs/misc/model_out_spillover_risk_visit_level.jpeg",
      width = 1000, height = 500, units = "px")
@@ -941,14 +953,16 @@ palette <- wesanderson::wes_palette("Darjeeling1") %>%
 # Base figure
 p <- bayesplot::mcmc_trace(
   fit.spill$draws(format = "matrix"), 
-  pars = c("a", "bR", "bW", "sigma_site"),
-  size = 0.8
+  pars = c("a", "bR", "bW", "sigma_site", "sigma_visit"),
+  size = 0.8,
+  facet_args = list(ncol = 2)
 ) 
 
 # Relabel strip text
 levels(p$data$parameter) <- c(
   "grand mean", "*Rattus rattus* effect (present vs. absent)",
-  "season effect (wet vs. dry)", "σ (for site-level varying intercepts)"
+  "season effect (wet vs. dry)", "σ (for site-level varying intercepts)",
+  "σ (for visit-level varying intercepts)"
 )
 
 # Plot
@@ -962,7 +976,7 @@ p +
 
 ggsave(
   "outputs/misc/spillover_risk_model_visit_level_house_traps_trace_plots.jpeg",
-  width = 3500, height = 3000, units = "px"
+  width = 3500, height = 4000, units = "px"
 )
 
 
@@ -1175,12 +1189,13 @@ ggsave(
 
 # Statistical analyses of other rodent species at visit level, only house traps
 
-# Load Mer model
-Mer.mod <- cmdstan_model("stan_models/visit_model_Mer_at_site.stan")
-
+# Package Mer data
+stan.dat.house.traps.Mer <- stan.dat.house.traps.Rra
+stan.dat.house.traps.Mer$rodent_at_site <- visit.dat.only.houses$Mer_at_site
+  
 # Fit model
-fit.m3 <- Mer.mod$sample(
-  data = stan.dat, 
+fit.m3 <- visit.mod$sample(
+  data = stan.dat.house.traps.Mer, 
   chains = 4, 
   parallel_chains = 4,
   iter_warmup = 2500,
@@ -1198,17 +1213,18 @@ fit.m3$print(max_rows = 100)
 
 draws.m3 <- fit.m3$draws(format = "matrix") %>%
   data.frame() %>%
-  select(a, bM, bW, sigma_site)
+  select(a, bR, bW, sigma_site, sigma_visit)
 
 precis(draws.m3, prob = 0.8)
-quantile(draws.m3$bM, c(0.05, 0.95))
+quantile(draws.m3$bR, c(0.05, 0.95))
 
-# Load Mma model
-Mma.mod <- cmdstan_model("stan_models/visit_model_Mma_at_site.stan")
+# Package Mma data
+stan.dat.house.traps.Mma <- stan.dat.house.traps.Rra
+stan.dat.house.traps.Mma$rodent_at_site <- visit.dat.only.houses$Mma_at_site
 
 # Fit model
-fit.m4 <- Mma.mod$sample(
-  data = stan.dat, 
+fit.m4 <- visit.mod$sample(
+  data = stan.dat.house.traps.Mma, 
   chains = 4, 
   parallel_chains = 4,
   iter_warmup = 2500,
@@ -1226,17 +1242,18 @@ fit.m4$print(max_rows = 100)
 
 draws.m4 <- fit.m4$draws(format = "matrix") %>%
   data.frame() %>%
-  select(a, bM, bW, sigma_site)
+  select(a, bR, bW, sigma_site, sigma_visit)
 
 precis(draws.m4, prob = 0.8)
-quantile(draws.m4$bM, c(0.05, 0.95))
+quantile(draws.m4$bR, c(0.05, 0.95))
 
-# Load Pda model
-Pda.mod <- cmdstan_model("stan_models/visit_model_Pda_at_site.stan")
+# Package Pda data
+stan.dat.house.traps.Pda <- stan.dat.house.traps.Rra
+stan.dat.house.traps.Pda$rodent_at_site <- visit.dat.only.houses$Pda_at_site
 
 # Fit model
-fit.m5 <- Pda.mod$sample(
-  data = stan.dat, 
+fit.m5 <- visit.mod$sample(
+  data = stan.dat.house.traps.Pda, 
   chains = 4, 
   parallel_chains = 4,
   iter_warmup = 2500,
@@ -1254,17 +1271,18 @@ fit.m5$print(max_rows = 100)
 
 draws.m5 <- fit.m5$draws(format = "matrix") %>%
   data.frame() %>%
-  select(a, bP, bW, sigma_site)
+  select(a, bR, bW, sigma_site, sigma_visit)
 
 precis(draws.m5, prob = 0.8)
-quantile(draws.m5$bP, c(0.05, 0.95))
+quantile(draws.m5$bR, c(0.05, 0.95))
 
-# Load Pro model
-Pro.mod <- cmdstan_model("stan_models/visit_model_Pro_at_site.stan")
+# Package Pro data
+stan.dat.house.traps.Pro <- stan.dat.house.traps.Rra
+stan.dat.house.traps.Pro$rodent_at_site <- visit.dat.only.houses$Pro_at_site
 
 # Fit model
-fit.m6 <- Pro.mod$sample(
-  data = stan.dat, 
+fit.m6 <- visit.mod$sample(
+  data = stan.dat.house.traps.Pro, 
   chains = 4, 
   parallel_chains = 4,
   iter_warmup = 2500,
@@ -1282,10 +1300,10 @@ fit.m6$print(max_rows = 100)
 
 draws.m6 <- fit.m6$draws(format = "matrix") %>%
   data.frame() %>%
-  select(a, bP, bW, sigma_site)
+  select(a, bR, bW, sigma_site, sigma_visit)
 
 precis(draws.m6, prob = 0.8)
-quantile(draws.m6$bP, c(0.05, 0.95))
+quantile(draws.m6$bR, c(0.05, 0.95))
 
 
 # Generate a figure of all rodent presence/absence effect posteriors
@@ -1299,10 +1317,10 @@ dat.ridges <- data.frame(
   ),
   value = c(
     draws.m2$bR,
-    draws.m3$bM,
-    draws.m4$bM,
-    draws.m5$bP,
-    draws.m6$bP
+    draws.m3$bR,
+    draws.m4$bR,
+    draws.m5$bR,
+    draws.m6$bR
   )
 ) %>%
   arrange(species)
@@ -1343,12 +1361,9 @@ ggsave(
 # Statistical analyses of other rodent species in spillover risk model (visit
 # level, only house traps)
 
-# Load Mer model
-Mer.mod <- cmdstan_model("stan_models/spillover_risk_visit_level_Mer_at_site.stan")
-
-# Fit model
-fit.spill2 <- Mer.mod$sample(
-  data = stan.dat, 
+# Fit Mer model
+fit.spill2 <- spill.mod$sample(
+  data = stan.dat.house.traps.Mer, 
   chains = 4, 
   parallel_chains = 4,
   iter_warmup = 2500,
@@ -1366,17 +1381,14 @@ fit.spill2$print(max_rows = 100)
 
 draws.spill2 <- fit.spill2$draws(format = "matrix") %>%
   data.frame() %>%
-  select(a, bM, bW, sigma_site)
+  select(a, bR, bW, sigma_site, sigma_visit)
 
 precis(draws.spill2, prob = 0.8)
-quantile(draws.spill2$bM, c(0.05, 0.95))
+quantile(draws.spill2$bR, c(0.05, 0.95))
 
-# Load Mma model
-Mma.mod <- cmdstan_model("stan_models/spillover_risk_visit_level_Mma_at_site.stan")
-
-# Fit model
-fit.spill3 <- Mma.mod$sample(
-  data = stan.dat, 
+# Fit Mma model
+fit.spill3 <- visit.mod$sample(
+  data = stan.dat.house.traps.Mma, 
   chains = 4, 
   parallel_chains = 4,
   iter_warmup = 2500,
@@ -1394,17 +1406,14 @@ fit.spill3$print(max_rows = 100)
 
 draws.spill3 <- fit.spill3$draws(format = "matrix") %>%
   data.frame() %>%
-  select(a, bM, bW, sigma_site)
+  select(a, bR, bW, sigma_site, sigma_visit)
 
 precis(draws.spill3, prob = 0.8)
-quantile(draws.spill3$bM, c(0.05, 0.95))
+quantile(draws.spill3$bR, c(0.05, 0.95))
 
-# Load Pda model
-Pda.mod <- cmdstan_model("stan_models/spillover_risk_visit_level_Pda_at_site.stan")
-
-# Fit model
-fit.spill4 <- Pda.mod$sample(
-  data = stan.dat, 
+# Fit Pda model
+fit.spill4 <- visit.mod$sample(
+  data = stan.dat.house.traps.Pda, 
   chains = 4, 
   parallel_chains = 4,
   iter_warmup = 2500,
@@ -1422,17 +1431,14 @@ fit.spill4$print(max_rows = 100)
 
 draws.spill4 <- fit.spill4$draws(format = "matrix") %>%
   data.frame() %>%
-  select(a, bP, bW, sigma_site)
+  select(a, bR, bW, sigma_site, sigma_visit)
 
 precis(draws.spill4, prob = 0.8)
-quantile(draws.spill4$bP, c(0.05, 0.95))
+quantile(draws.spill4$bR, c(0.05, 0.95))
 
-# Load Pro model
-Pro.mod <- cmdstan_model("stan_models/spillover_risk_visit_level_Pro_at_site.stan")
-
-# Fit model
-fit.spill5 <- Pro.mod$sample(
-  data = stan.dat, 
+# Fit Pro model
+fit.spill5 <- visit.mod$sample(
+  data = stan.dat.house.traps.Pro, 
   chains = 4, 
   parallel_chains = 4,
   iter_warmup = 2500,
@@ -1450,10 +1456,10 @@ fit.spill5$print(max_rows = 100)
 
 draws.spill5 <- fit.spill5$draws(format = "matrix") %>%
   data.frame() %>%
-  select(a, bP, bW, sigma_site)
+  select(a, bR, bW, sigma_site, sigma_visit)
 
 precis(draws.spill5, prob = 0.8)
-quantile(draws.spill5$bP, c(0.05, 0.95))
+quantile(draws.spill5$bR, c(0.05, 0.95))
 
 
 # Generate a figure of all rodent presence/absence effect posteriors
@@ -1467,10 +1473,10 @@ dat.ridges <- data.frame(
   ),
   value = c(
     draws.spill$bR,
-    draws.spill2$bM,
-    draws.spill3$bM,
-    draws.spill4$bP,
-    draws.spill5$bP
+    draws.spill2$bR,
+    draws.spill3$bR,
+    draws.spill4$bR,
+    draws.spill5$bR
   )
 ) %>%
   arrange(species)

@@ -1,4 +1,4 @@
-// A Poisson regression with effect of Rra_at_site, wet season, and 
+// A Poisson regression with effect of rodent_at_site, wet season, and 
 // varying intercepts by site and visit, to be used as an index of 
 // spillover risk with visit-level data
 
@@ -7,7 +7,7 @@ data {
   int<lower=0> N;
   
   array[N] int n_Mna_pos_lassa;
-  array[N] int Rra_at_site;
+  array[N] int rodent_at_site;
   array[N] int wet_season;
   array[N] real log_tot_traps;
   
@@ -21,7 +21,7 @@ data {
 parameters {
   
   real a; // intercept
-  real bR; // Rattus effect
+  real bR; // rodent effect
   real bW; // wet season effect
   
   // varying intercepts by site (centered parameterization)
@@ -61,7 +61,7 @@ model {
   
   for (i in 1:N) {
     
-    lambda[i] = a + bR * Rra_at_site[i] + bW * wet_season[i] + 
+    lambda[i] = a + bR * rodent_at_site[i] + bW * wet_season[i] + 
     a_site[site[i]] + a_visit[visit[i]] +
     log_tot_traps[i];
     n_Mna_pos_lassa[i] ~ poisson_log(lambda[i]);
@@ -86,7 +86,7 @@ generated quantities {
   
   for (i in 1:N) {
     
-    lambda[i] = a + bR * Rra_at_site[i] + bW * wet_season[i] + 
+    lambda[i] = a + bR * rodent_at_site[i] + bW * wet_season[i] + 
     a_site[site[i]] + a_visit[visit[i]];
   }
 }
