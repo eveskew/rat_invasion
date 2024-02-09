@@ -1,28 +1,35 @@
-// A Poisson regression with effect of Rra_at_site, wet season, and 
-// varying intercepts by site, to be used with visit-level data
+// A Poisson regression with effect of rodent_at_site, wet season, and 
+// varying intercepts by site and visit, to be used with visit-level data
 
 data {
   
   int<lower=0> N;
   
   array[N] int n_Mna;
-  array[N] int Rra_at_site;
+  array[N] int rodent_at_site;
   array[N] int wet_season;
   array[N] real log_tot_traps;
   
   int<lower=0> N_site;
   array[N] int<lower=1, upper=N_site> site;
+  
+  int<lower=0> N_visit;
+  array[N] int<lower=1, upper=N_visit> visit;
 }
 
 parameters {
   
   real a; // intercept
-  real bR; // Rattus effect
+  real bR; // rodent presence effect
   real bW; // wet season effect
   
   // varying intercepts by site
   vector[N_site] a_site;
   real<lower=0> sigma_site;
+  
+  // varying intercepts by visit
+  vector[N_visit] a_visit;
+  real<lower=0> sigma_visit;
 }
 
 model {
@@ -36,9 +43,13 @@ model {
   a_site ~ normal(0, sigma_site);
   sigma_site ~ exponential(1);
   
+  a_visit ~ normal(0, sigma_visit);
+  sigma_visit ~ exponential(1);
+  
   for (i in 1:N) {
     
-    lambda[i] = a + bR * Rra_at_site[i] + bW * wet_season[i] + a_site[site[i]] + 
+    lambda[i] = a + bR * rodent_at_site[i] + bW * wet_season[i] + 
+    a_site[site[i]] + a_visit[visit[i]] +
     log_tot_traps[i];
     n_Mna[i] ~ poisson_log(lambda[i]);
   }
@@ -50,6 +61,7 @@ generated quantities {
   
   for (i in 1:N) {
     
-    lambda[i] = a + bR * Rra_at_site[i] + bW * wet_season[i] + a_site[site[i]];
+    lambda[i] = a + bR * rodent_at_site[i] + bW * wet_season[i] + 
+    a_site[site[i]] + a_visit[visit[i]];
   }
 }
