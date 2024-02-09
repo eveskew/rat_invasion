@@ -38,3 +38,24 @@ get.decimal.coord <- function(coord){
   }
   return(dec.coord)
 }
+
+
+# Function to summarize parameters in terms of both HPDIs and PIs
+parameter_summary <- function(df, prob) {
+  
+  summary <- df %>%
+    tidyr::pivot_longer(everything(), names_to = "parameter", values_to = "value") %>%
+    group_by(parameter) %>%
+    summarize(
+      mean = mean(value),
+      lower_HPDI = HPDI(value, prob = prob)[1],
+      upper_HPDI = HPDI(value, prob = prob)[2],
+      lower_PI = PI(value, prob = prob)[1],
+      upper_PI = PI(value, prob = prob)[2],
+      width_HPDI = upper_HPDI - lower_HPDI,
+      width_PI = upper_PI - lower_PI
+    ) %>%
+    ungroup()
+  
+  return(summary)
+}

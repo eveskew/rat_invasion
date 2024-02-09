@@ -251,7 +251,7 @@ draws.m1 <- fit.m1$draws(format = "matrix") %>%
 jpeg("outputs/misc/model_out_site_level_all_traps_Rra_at_site.jpeg",
      width = 1000, height = 500, units = "px")
 
-precis(draws.m1, prob = 0.99)
+parameter_summary(draws.m1, prob = 0.99)
 plot(precis(draws.m1, prob = 0.99), col = "gold2")
 plot(precis(draws.m1, prob = 0.9), add = TRUE)
 
@@ -500,7 +500,7 @@ draws.m2 <- fit.m2$draws(format = "matrix") %>%
 jpeg("outputs/misc/model_out_site_level_house_traps_Rra_at_site.jpeg",
      width = 1000, height = 500, units = "px")
 
-precis(draws.m2, prob = 0.99)
+parameter_summary(draws.m2, prob = 0.99)
 plot(precis(draws.m2, prob = 0.99), col = "gold2")
 plot(precis(draws.m2, prob = 0.9), add = TRUE)
 
@@ -914,7 +914,7 @@ draws.mc <- fit.mc$draws(format = "matrix") %>%
 jpeg("outputs/misc/model_out_McCormick.jpeg",
      width = 1000, height = 500, units = "px")
 
-precis(draws.mc, prob = 0.99)
+parameter_summary(draws.mc, prob = 0.99)
 plot(precis(draws.mc, prob = 0.99), col = "gold2")
 plot(precis(draws.mc, prob = 0.9), add = TRUE)
 
@@ -1023,7 +1023,7 @@ draws.spill <- fit.spill$draws(format = "matrix") %>%
 jpeg("outputs/misc/model_out_spillover_risk_site_level.jpeg",
      width = 1000, height = 500, units = "px")
 
-precis(draws.spill, prob = 0.99)
+parameter_summary(draws.spill, prob = 0.99)
 plot(precis(draws.spill, prob = 0.99), col = "gold2")
 plot(precis(draws.spill, prob = 0.9), add = TRUE)
 

@@ -233,7 +233,7 @@ draws.m1 <- fit.m1$draws(format = "matrix") %>%
 jpeg("outputs/misc/model_out_visit_level_all_traps_Rra_at_site.jpeg",
      width = 1000, height = 500, units = "px")
 
-precis(draws.m1, prob = 0.99)
+parameter_summary(draws.m1, prob = 0.99)
 plot(precis(draws.m1, prob = 0.99), col = "gold2")
 plot(precis(draws.m1, prob = 0.9), add = TRUE)
 
@@ -421,7 +421,7 @@ draws.m2 <- fit.m2$draws(format = "matrix") %>%
 jpeg("outputs/misc/model_out_visit_level_house_traps_Rra_at_site.jpeg",
      width = 1000, height = 500, units = "px")
 
-precis(draws.m2, prob = 0.99)
+parameter_summary(draws.m2, prob = 0.99)
 plot(precis(draws.m2, prob = 0.99), col = "gold2")
 plot(precis(draws.m2, prob = 0.9), add = TRUE)
 
@@ -937,7 +937,7 @@ draws.spill <- fit.spill$draws(format = "matrix") %>%
 jpeg("outputs/misc/model_out_spillover_risk_visit_level.jpeg",
      width = 1000, height = 500, units = "px")
 
-precis(draws.spill, prob = 0.99)
+parameter_summary(draws.spill, prob = 0.99)
 plot(precis(draws.spill, prob = 0.99), col = "gold2")
 plot(precis(draws.spill, prob = 0.9), add = TRUE)
 
@@ -1215,8 +1215,7 @@ draws.m3 <- fit.m3$draws(format = "matrix") %>%
   data.frame() %>%
   select(a, bR, bW, sigma_site, sigma_visit)
 
-precis(draws.m3, prob = 0.8)
-quantile(draws.m3$bR, c(0.05, 0.95))
+parameter_summary(draws.m3, prob = 0.8)
 
 # Package Mma data
 stan.dat.house.traps.Mma <- stan.dat.house.traps.Rra
@@ -1244,8 +1243,7 @@ draws.m4 <- fit.m4$draws(format = "matrix") %>%
   data.frame() %>%
   select(a, bR, bW, sigma_site, sigma_visit)
 
-precis(draws.m4, prob = 0.8)
-quantile(draws.m4$bR, c(0.05, 0.95))
+parameter_summary(draws.m4, prob = 0.8)
 
 # Package Pda data
 stan.dat.house.traps.Pda <- stan.dat.house.traps.Rra
@@ -1273,8 +1271,7 @@ draws.m5 <- fit.m5$draws(format = "matrix") %>%
   data.frame() %>%
   select(a, bR, bW, sigma_site, sigma_visit)
 
-precis(draws.m5, prob = 0.8)
-quantile(draws.m5$bR, c(0.05, 0.95))
+parameter_summary(draws.m5, prob = 0.8)
 
 # Package Pro data
 stan.dat.house.traps.Pro <- stan.dat.house.traps.Rra
@@ -1302,8 +1299,7 @@ draws.m6 <- fit.m6$draws(format = "matrix") %>%
   data.frame() %>%
   select(a, bR, bW, sigma_site, sigma_visit)
 
-precis(draws.m6, prob = 0.8)
-quantile(draws.m6$bR, c(0.05, 0.95))
+parameter_summary(draws.m6, prob = 0.8)
 
 
 # Generate a figure of all rodent presence/absence effect posteriors
@@ -1383,8 +1379,7 @@ draws.spill2 <- fit.spill2$draws(format = "matrix") %>%
   data.frame() %>%
   select(a, bR, bW, sigma_site, sigma_visit)
 
-precis(draws.spill2, prob = 0.8)
-quantile(draws.spill2$bR, c(0.05, 0.95))
+parameter_summary(draws.spill2, prob = 0.8)
 
 # Fit Mma model
 fit.spill3 <- visit.mod$sample(
@@ -1408,8 +1403,7 @@ draws.spill3 <- fit.spill3$draws(format = "matrix") %>%
   data.frame() %>%
   select(a, bR, bW, sigma_site, sigma_visit)
 
-precis(draws.spill3, prob = 0.8)
-quantile(draws.spill3$bR, c(0.05, 0.95))
+parameter_summary(draws.spill3, prob = 0.8)
 
 # Fit Pda model
 fit.spill4 <- visit.mod$sample(
@@ -1433,8 +1427,7 @@ draws.spill4 <- fit.spill4$draws(format = "matrix") %>%
   data.frame() %>%
   select(a, bR, bW, sigma_site, sigma_visit)
 
-precis(draws.spill4, prob = 0.8)
-quantile(draws.spill4$bR, c(0.05, 0.95))
+parameter_summary(draws.spill4, prob = 0.8)
 
 # Fit Pro model
 fit.spill5 <- visit.mod$sample(
@@ -1458,8 +1451,7 @@ draws.spill5 <- fit.spill5$draws(format = "matrix") %>%
   data.frame() %>%
   select(a, bR, bW, sigma_site, sigma_visit)
 
-precis(draws.spill5, prob = 0.8)
-quantile(draws.spill5$bR, c(0.05, 0.95))
+parameter_summary(draws.spill5, prob = 0.8)
 
 
 # Generate a figure of all rodent presence/absence effect posteriors
