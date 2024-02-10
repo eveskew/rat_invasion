@@ -1,6 +1,9 @@
 library(tidyverse)
 library(rethinking)
 library(lubridate)
+library(assertthat)
+
+source("R/functions.R")
 
 #==============================================================================
 
@@ -98,13 +101,20 @@ house.level.captures <- track.level.captures %>%
     house_w_both = n_Mna > 0 & n_Rra > 0,
     house_w_neither = n_Mna == 0 & n_Rra == 0,
     Mna_per_trap = n_Mna/tot_traps,
-    Rra_at_house = ifelse(n_Rra > 0, 1, 0)
+    Rra_at_house = ifelse(n_Rra > 0, 1, 0),
+    Mer_at_house = ifelse(n_Mer > 0, 1, 0),
+    Pda_at_house = ifelse(n_Pda > 0, 1, 0),
+    Pro_at_house = ifelse(n_Pro > 0, 1, 0)
   ) %>%
   left_join(
     .,
     visit.dat %>%
       filter(data_source == "PREEMPT") %>%
-      select(site, visit, date, Rra_at_site, wet_season) %>%
+      select(
+        site, visit, date, 
+        Rra_at_site, Mer_at_site, Pda_at_site, Pro_at_site,
+        wet_season
+      ) %>%
       mutate(visit = as.numeric(visit)),
     by = c("site", "visit", "date")
   )
@@ -279,29 +289,35 @@ house.level.captures %>%
 
 # Statistical analyses at house level
 
-# Package data for Stan models
-stan.dat <- list(
+# Package data for Stan models with Rra effect
+stan.dat.house.Rra <- list(
   N = nrow(house.level.captures),
   n_Mna = house.level.captures$n_Mna,
   n_Rra = house.level.captures$n_Rra,
   n_Rra_s = standardize(house.level.captures$n_Rra),
-  Rra_at_site = house.level.captures$Rra_at_site,
-  Rra_at_house = house.level.captures$Rra_at_house,
+  rodent_at_site = house.level.captures$Rra_at_site,
+  rodent_at_house = house.level.captures$Rra_at_house,
   wet_season = house.level.captures$wet_season,
   tot_traps = house.level.captures$tot_traps,
   log_tot_traps = log(house.level.captures$tot_traps),
   N_site = n_distinct(house.level.captures$site),
   site = as.numeric(as.factor(house.level.captures$site)),
+  N_visit = paste0(house.level.captures$site, "-", house.level.captures$visit) %>%
+    n_distinct(),
+  visit = paste0(house.level.captures$site, "-", house.level.captures$visit) %>%
+    as.factor() %>%
+    as.numeric(),
   N_house = n_distinct(house.level.captures$house_id),
   house = as.numeric(as.factor(house.level.captures$house_id))
 )
+assert_that(nrow(house.level.captures) == stan.dat.house.Rra$N_house)
 
 # Load model
-house.mod.Rra.at.site <- cmdstan_model("stan_models/house_model_Rra_at_site.stan")
+house.mod.site.predictor <- cmdstan_model("stan_models/house_model_site_predictor.stan")
 
-# Fit model
-fit.m1 <- house.mod.Rra.at.site$sample(
-  data = stan.dat, 
+# Fit Rra model
+fit.m1 <- house.mod.site.predictor$sample(
+  data = stan.dat.house.Rra, 
   chains = 4, 
   parallel_chains = 4,
   iter_warmup = 2500,
@@ -319,12 +335,12 @@ fit.m1$print(max_rows = 100)
 
 draws.m1 <- fit.m1$draws(format = "matrix") %>%
   data.frame() %>%
-  select(a, bR, bW, sigma_site)
+  select(a, bR, bW, sigma_site, sigma_visit, sigma_house)
 
 jpeg("outputs/misc/model_out_house_level_Rra_at_site.jpeg",
      width = 1000, height = 500, units = "px")
 
-precis(draws.m1, prob = 0.99)
+parameter_summary(draws.m1, prob = 0.99)
 plot(precis(draws.m1, prob = 0.99), col = "gold2")
 plot(precis(draws.m1, prob = 0.9), add = TRUE)
 
@@ -344,7 +360,7 @@ palette <- wesanderson::wes_palette("Darjeeling1") %>%
 # Base figure
 p <- bayesplot::mcmc_trace(
   fit.m1$draws(format = "matrix"), 
-  pars = c("a", "bR", "bW", "sigma_site"),
+  pars = c("a", "bR", "bW", "sigma_site", "sigma_visit", "sigma_house"),
   size = 0.8,
   facet_args = list(ncol = 2)
 ) 
@@ -352,7 +368,8 @@ p <- bayesplot::mcmc_trace(
 # Relabel strip text
 levels(p$data$parameter) <- c(
   "grand mean", "*Rattus rattus* effect (present vs. absent)",
-  "season effect (wet vs. dry)", "σ (for site-level varying intercepts)"
+  "season effect (wet vs. dry)", "σ (for site-level varying intercepts)",
+  "σ (for visit-level varying intercepts)", "σ (for house-level varying intercepts)"
 )
 
 # Plot
@@ -366,7 +383,7 @@ p +
 
 ggsave(
   "outputs/misc/house_level_house_traps_Rra_at_site_trace_plots.jpeg",
-  width = 3500, height = 3000, units = "px"
+  width = 3500, height = 4000, units = "px"
 )
 
 
@@ -400,11 +417,11 @@ ggsave("outputs/misc/house_level_house_traps_Rra_at_site_coefficient.jpeg",
 # Fit the same model but with the house-level Rattus rattus predictor 
 
 # Load model
-house.mod.Rra.at.house <- cmdstan_model("stan_models/house_model_Rra_at_house.stan")
+house.mod.house.predictor <- cmdstan_model("stan_models/house_model_house_predictor.stan")
 
-# Fit model
-fit.m2 <- house.mod.Rra.at.house$sample(
-  data = stan.dat, 
+# Fit Rra model
+fit.m2 <- house.mod.house.predictor$sample(
+  data = stan.dat.house.Rra, 
   chains = 4, 
   parallel_chains = 4,
   iter_warmup = 2500,
@@ -422,12 +439,12 @@ fit.m2$print(max_rows = 100)
 
 draws.m2 <- fit.m2$draws(format = "matrix") %>%
   data.frame() %>%
-  select(a, bR, bW, sigma_site)
+  select(a, bR, bW, sigma_site, sigma_visit, sigma_house)
 
 jpeg("outputs/misc/model_out_house_level_Rra_at_house.jpeg",
      width = 1000, height = 500, units = "px")
 
-precis(draws.m2, prob = 0.99)
+parameter_summary(draws.m2, prob = 0.99)
 plot(precis(draws.m2, prob = 0.99), col = "gold2")
 plot(precis(draws.m2, prob = 0.9), add = TRUE)
 
@@ -447,7 +464,7 @@ palette <- wesanderson::wes_palette("Darjeeling1") %>%
 # Base figure
 p <- bayesplot::mcmc_trace(
   fit.m2$draws(format = "matrix"), 
-  pars = c("a", "bR", "bW", "sigma_site"),
+  pars = c("a", "bR", "bW", "sigma_site", "sigma_visit", "sigma_house"),
   size = 0.8,
   facet_args = list(ncol = 2)
 ) 
@@ -455,7 +472,8 @@ p <- bayesplot::mcmc_trace(
 # Relabel strip text
 levels(p$data$parameter) <- c(
   "grand mean", "*Rattus rattus* effect (present vs. absent)",
-  "season effect (wet vs. dry)", "σ (for site-level varying intercepts)"
+  "season effect (wet vs. dry)", "σ (for site-level varying intercepts)",
+  "σ (for visit-level varying intercepts)", "σ (for house-level varying intercepts)"
 )
 
 # Plot
@@ -559,6 +577,277 @@ ggplot() +
 #==============================================================================
 
 
+# Statistical analyses of other rodent species at house level, with site-level
+# predictors
+
+# Package Mer data
+stan.dat.house.Mer <- stan.dat.house.Rra
+stan.dat.house.Mer$rodent_at_site <- house.level.captures$Mer_at_site
+stan.dat.house.Mer$rodent_at_house <- house.level.captures$Mer_at_house
+
+# Fit Mer model
+fit.m3 <- house.mod.site.predictor$sample(
+  data = stan.dat.house.Mer, 
+  chains = 4, 
+  parallel_chains = 4,
+  iter_warmup = 2500,
+  iter_sampling = 5000,
+  adapt_delta = 0.99,
+  seed = 8
+)
+
+# Save/load fit model object
+fit.m3$save_object("saved_models/house_mod_house_traps_Mer_at_site.RDS")
+fit.m3 <- readRDS("saved_models/house_mod_house_traps_Mer_at_site.RDS")
+
+fit.m3$diagnostic_summary()
+fit.m3$print(max_rows = 100)
+
+draws.m3 <- fit.m3$draws(format = "matrix") %>%
+  data.frame() %>%
+  select(a, bR, bW, sigma_site, sigma_visit, sigma_house)
+
+parameter_summary(draws.m3, prob = 0.8)
+
+# Package Pda data
+stan.dat.house.Pda <- stan.dat.house.Rra
+stan.dat.house.Pda$rodent_at_site <- house.level.captures$Pda_at_site
+stan.dat.house.Pda$rodent_at_house <- house.level.captures$Pda_at_house
+
+# Fit Pda model
+fit.m4 <- house.mod.site.predictor$sample(
+  data = stan.dat.house.Pda, 
+  chains = 4, 
+  parallel_chains = 4,
+  iter_warmup = 2500,
+  iter_sampling = 5000,
+  adapt_delta = 0.99,
+  seed = 8
+)
+
+# Save/load fit model object
+fit.m4$save_object("saved_models/house_mod_house_traps_Pda_at_site.RDS")
+fit.m4 <- readRDS("saved_models/house_mod_house_traps_Pda_at_site.RDS")
+
+fit.m4$diagnostic_summary()
+fit.m4$print(max_rows = 100)
+
+draws.m4 <- fit.m4$draws(format = "matrix") %>%
+  data.frame() %>%
+  select(a, bR, bW, sigma_site, sigma_visit, sigma_house)
+
+parameter_summary(draws.m4, prob = 0.8)
+
+# Package Pro data
+stan.dat.house.Pro <- stan.dat.house.Rra
+stan.dat.house.Pro$rodent_at_site <- house.level.captures$Pro_at_site
+stan.dat.house.Pro$rodent_at_house <- house.level.captures$Pro_at_house
+
+# Fit Pro model
+fit.m5 <- house.mod.site.predictor$sample(
+  data = stan.dat.house.Pro, 
+  chains = 4, 
+  parallel_chains = 4,
+  iter_warmup = 2500,
+  iter_sampling = 5000,
+  adapt_delta = 0.99,
+  seed = 8
+)
+
+# Save/load fit model object
+fit.m5$save_object("saved_models/house_mod_house_traps_Pro_at_site.RDS")
+fit.m5 <- readRDS("saved_models/house_mod_house_traps_Pro_at_site.RDS")
+
+fit.m5$diagnostic_summary()
+fit.m5$print(max_rows = 100)
+
+draws.m5 <- fit.m5$draws(format = "matrix") %>%
+  data.frame() %>%
+  select(a, bR, bW, sigma_site, sigma_visit, sigma_house)
+
+parameter_summary(draws.m5, prob = 0.8)
+
+
+# Generate a figure of all rodent presence/absence effect posteriors
+
+# Package data from all species-specific models
+dat.ridges <- data.frame(
+  species = rep(
+    c("Rattus rattus", "Mastomys erythroleucus",
+      "Praomys daltoni", "Praomys rostratus"),
+    each = length(draws.m1$bR)
+  ),
+  value = c(
+    draws.m1$bR,
+    draws.m3$bR,
+    draws.m4$bR,
+    draws.m5$bR
+  )
+) %>%
+  arrange(species)
+
+# Plot
+palette <- wesanderson::wes_palette("Darjeeling2")
+palette <- palette[c(1, 3:5)]
+
+dat.ridges %>%
+  mutate(species = forcats::fct_rev(species)) %>%
+  ggplot(aes(x = value, y = species, fill = rev(species))) +
+  geom_vline(xintercept = 0, linewidth = 2, lty = 2) +
+  ggridges::stat_density_ridges(
+    quantile_lines = TRUE, 
+    quantiles = c(0.10, 0.90), 
+    alpha = 0.6
+  ) +
+  scale_fill_manual(values = palette) +
+  theme_minimal() +
+  xlab("Parameter Value") +
+  ylab("") +
+  xlim(-5, 5) +
+  theme(
+    text = element_text(size = 21),
+    axis.text.y = element_text(face = "italic"),
+    legend.position = "none"
+  )
+
+ggsave(
+  "outputs/misc/species_presence_effect_posteriors_house_model_site_predictors.jpeg", 
+  width = 3000, 
+  height = 2000, 
+  unit = "px"
+)
+
+#==============================================================================
+
+
+# Statistical analyses of other rodent species at house level, with house-level
+# predictors
+
+# Fit Mer model
+fit.m6 <- house.mod.house.predictor$sample(
+  data = stan.dat.house.Mer, 
+  chains = 4, 
+  parallel_chains = 4,
+  iter_warmup = 2500,
+  iter_sampling = 5000,
+  adapt_delta = 0.99,
+  seed = 8
+)
+
+# Save/load fit model object
+fit.m6$save_object("saved_models/house_mod_house_traps_Mer_at_house.RDS")
+fit.m6 <- readRDS("saved_models/house_mod_house_traps_Mer_at_house.RDS")
+
+fit.m6$diagnostic_summary()
+fit.m6$print(max_rows = 100)
+
+draws.m6 <- fit.m6$draws(format = "matrix") %>%
+  data.frame() %>%
+  select(a, bR, bW, sigma_site, sigma_visit, sigma_house)
+
+parameter_summary(draws.m6, prob = 0.8)
+
+# Fit Pda model
+fit.m7 <- house.mod.house.predictor$sample(
+  data = stan.dat.house.Pda, 
+  chains = 4, 
+  parallel_chains = 4,
+  iter_warmup = 2500,
+  iter_sampling = 5000,
+  adapt_delta = 0.99,
+  seed = 8
+)
+
+# Save/load fit model object
+fit.m7$save_object("saved_models/house_mod_house_traps_Pda_at_house.RDS")
+fit.m7 <- readRDS("saved_models/house_mod_house_traps_Pda_at_house.RDS")
+
+fit.m7$diagnostic_summary()
+fit.m7$print(max_rows = 100)
+
+draws.m7 <- fit.m7$draws(format = "matrix") %>%
+  data.frame() %>%
+  select(a, bR, bW, sigma_site, sigma_visit, sigma_house)
+
+parameter_summary(draws.m7, prob = 0.8)
+
+# Fit Pro model
+fit.m8 <- house.mod.house.predictor$sample(
+  data = stan.dat.house.Pro, 
+  chains = 4, 
+  parallel_chains = 4,
+  iter_warmup = 2500,
+  iter_sampling = 5000,
+  adapt_delta = 0.99,
+  seed = 8
+)
+
+# Save/load fit model object
+fit.m8$save_object("saved_models/house_mod_house_traps_Pro_at_house.RDS")
+fit.m8 <- readRDS("saved_models/house_mod_house_traps_Pro_at_house.RDS")
+
+fit.m8$diagnostic_summary()
+fit.m8$print(max_rows = 100)
+
+draws.m8 <- fit.m8$draws(format = "matrix") %>%
+  data.frame() %>%
+  select(a, bR, bW, sigma_site, sigma_visit, sigma_house)
+
+parameter_summary(draws.m8, prob = 0.8)
+
+
+# Generate a figure of all rodent presence/absence effect posteriors
+
+# Package data from all species-specific models
+dat.ridges <- data.frame(
+  species = rep(
+    c("Rattus rattus", "Mastomys erythroleucus",
+      "Praomys daltoni", "Praomys rostratus"),
+    each = length(draws.m2$bR)
+  ),
+  value = c(
+    draws.m2$bR,
+    draws.m6$bR,
+    draws.m7$bR,
+    draws.m8$bR
+  )
+) %>%
+  arrange(species)
+
+# Plot
+palette <- wesanderson::wes_palette("Darjeeling2")
+palette <- palette[c(1, 3:5)]
+
+dat.ridges %>%
+  mutate(species = forcats::fct_rev(species)) %>%
+  ggplot(aes(x = value, y = species, fill = rev(species))) +
+  geom_vline(xintercept = 0, linewidth = 2, lty = 2) +
+  ggridges::stat_density_ridges(
+    quantile_lines = TRUE, 
+    quantiles = c(0.10, 0.90), 
+    alpha = 0.6
+  ) +
+  scale_fill_manual(values = palette) +
+  theme_minimal() +
+  xlab("Parameter Value") +
+  ylab("") +
+  xlim(-5, 5) +
+  theme(
+    text = element_text(size = 21),
+    axis.text.y = element_text(face = "italic"),
+    legend.position = "none"
+  )
+
+ggsave(
+  "outputs/misc/species_presence_effect_posteriors_house_model_house_predictors.jpeg", 
+  width = 3000, 
+  height = 2000, 
+  unit = "px"
+)
+
+#==============================================================================
+
+
 # Occupancy analyses - data preparation
 
 o <- summary.trap.dat %>%
@@ -647,6 +936,9 @@ o3 <- slice(o3, good.indices)
 occ.covs <- data.frame(
   site = o3$site,
   site_numeric = as.numeric(as.factor(o3$site)),
+  visit_numeric = paste0(o3$site, "-", o3$visit) %>%
+    as.factor() %>%
+    as.numeric(),
   house_numeric = as.numeric(as.factor(o3$house_id)),
   Rra_at_site = o3$Rra_at_site,
   wet_season = o3$wet_season
@@ -740,7 +1032,7 @@ o3 %>%
     occupancy = mean(occupancy)
   )
 
-# What is occupancy condition on R. rattus presence and season
+# What is occupancy conditional on R. rattus presence and season
 # (no pooling by site)
 o3 %>%
   rowwise() %>%
@@ -759,17 +1051,17 @@ o3 %>%
 priors.list <- list(
   beta.normal = list(mean = 0, var = 1),
   alpha.normal = list(mean = 0, var = 1),
-  sigma.sq.psi.ig = list(shape = 2, scale = 1)
+  sigma.sq.psi.ig = list(shape = 3, scale = 1)
 )
 
 # Fit an occupancy model
 out <- spOccupancy::PGOcc(
-  occ.formula = ~ Rra_at_site + wet_season + (1|site_numeric), 
+  occ.formula = ~ Rra_at_site + wet_season + (1|site_numeric) + (1|visit_numeric), 
   det.formula = ~ trap_count + cumulative_Mna_count, 
   data = data.list, 
   priors = priors.list,
-  n.burn = 10000,
-  n.samples = 35000,
+  n.burn = 15000,
+  n.samples = 40000,
   n.chains = 4,
   verbose = TRUE
 )
@@ -844,7 +1136,7 @@ hist %>%
   xlab(expression(paste("Occupancy coefficient for ", italic("Rattus rattus"), " presence"))) +
   ylab("Density") +
   xlim(-6, 2) +
-  ylim(0, 0.6) +
+  ylim(0, 0.7) +
   scale_fill_manual(values = c(alpha("darkred", 0.3), "white")) +
   theme_minimal() +
   theme(
@@ -974,7 +1266,7 @@ preds %>%
 
 occ.plot <- preds %>%
   ggplot(aes(x = occ_prob, color = site_status)) +
-  geom_density(aes(fill = site_status), size = 1) +
+  geom_density(aes(fill = site_status), linewidth = 1) +
   xlab(expression(paste("House-level occupancy of ", italic("Mastomys natalensis")))) +
   ylab("Density") +
   scale_color_manual(
@@ -999,7 +1291,7 @@ occ.plot <- preds %>%
       pull(occ_prob) %>%
       median(),
     color = "black",
-    lty = 2, size = 2
+    lty = 2, linewidth = 2
   ) +
   geom_vline(
     xintercept = preds %>%
@@ -1007,7 +1299,7 @@ occ.plot <- preds %>%
       pull(occ_prob) %>%
       median(),
     color = "darkred",
-    lty = 2, size = 2
+    lty = 2, linewidth = 2
   ) +
   theme(
     text = element_text(size = 20),
@@ -1042,7 +1334,7 @@ occ.plot <- preds %>%
   geom_point(position = position_dodge2(width = val.dodge), size = 5) +
   xlab(expression(paste(italic("Rattus rattus"), " status at site"))) +
   ylab(expression(atop(italic("Mastomys natalensis"), "house-level occupancy"))) +
-  scale_y_continuous(limits = c(0, 0.6)) +
+  scale_y_continuous(limits = c(0, 0.7)) +
   theme_minimal() +
   scale_color_manual(values = c("wheat3", "steelblue")) +
   theme(
