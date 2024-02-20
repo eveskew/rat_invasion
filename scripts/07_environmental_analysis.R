@@ -83,8 +83,8 @@ d$temperature <- d$temperature - 273.15
 
 
 # t-tests for differences between wet and dry season
-t.test(precipitation ~ wet_season, data = d)
-t.test(temperature ~ wet_season, data = d)
+t.test(precipitation ~ wet_season, data = d, var.equal = TRUE)
+t.test(temperature ~ wet_season, data = d, var.equal = TRUE)
 
 
 # Plot
@@ -93,7 +93,8 @@ set.seed(4)
 p <- ggplot() +
   ggbeeswarm::geom_quasirandom(
     data = d, 
-    aes(x = as.factor(wet_season), y = precipitation, color = as.factor(wet_season))
+    aes(x = as.factor(wet_season), y = precipitation, color = as.factor(wet_season)),
+    size = 4
   ) +
   xlab("Season") +
   ylab("Total Monthly Precipitation (mm)") +
@@ -102,14 +103,15 @@ p <- ggplot() +
   scale_color_manual(values = c("wheat3", "steelblue")) +
   theme_minimal() +
   theme(
-    text = element_text(size = 21),
+    text = element_text(size = 22),
     legend.position = "none"
   )
 
 t <- ggplot() +
   ggbeeswarm::geom_quasirandom(
     data = d, 
-    aes(x = as.factor(wet_season), y = temperature, color = as.factor(wet_season))
+    aes(x = as.factor(wet_season), y = temperature, color = as.factor(wet_season)),
+    size = 4
   ) +
   xlab("Season") +
   ylab("Monthly Average Temperature (°C)") +
@@ -118,14 +120,16 @@ t <- ggplot() +
   scale_color_manual(values = c("wheat3", "steelblue")) +
   theme_minimal() +
   theme(
-    text = element_text(size = 21),
+    text = element_text(size = 22),
     legend.position = "none"
   )
 
 cowplot::plot_grid(
-  p, t, nrow = 1,
-  labels = "auto"
+  p, t, 
+  nrow = 1,
+  labels = "auto",
+  label_size = 22
 )
 
-ggsave("outputs/misc/environmental_data_by_season.jpg",
+ggsave("outputs/misc/environmental_data_by_season.jpeg",
        width = 4000, height = 2000, units = "px")

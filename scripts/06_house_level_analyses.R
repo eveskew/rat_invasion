@@ -1110,6 +1110,24 @@ logb(1 - probability, failure)
 probability <- 0.99
 logb(1 - probability, failure)
 
+# Another way to do the calculation is to use the trap effort estimate from the
+# model directly
+
+# 3 traps
+mean(logistic(out$alpha.samples[,1] + (out$alpha.samples[,2]*3)))
+HPDI(logistic(out$alpha.samples[,1] + (out$alpha.samples[,2]*3)), prob = 0.99)
+dens(logistic(out$alpha.samples[,1] + (out$alpha.samples[,2]*3)), show.HPDI = 0.9)
+
+# 7 traps
+mean(logistic(out$alpha.samples[,1] + (out$alpha.samples[,2]*7)))
+HPDI(logistic(out$alpha.samples[,1] + (out$alpha.samples[,2]*7)), prob = 0.99)
+dens(logistic(out$alpha.samples[,1] + (out$alpha.samples[,2]*7)), show.HPDI = 0.9)
+
+# 13 traps
+mean(logistic(out$alpha.samples[,1] + (out$alpha.samples[,2]*13)))
+HPDI(logistic(out$alpha.samples[,1] + (out$alpha.samples[,2]*13)), prob = 0.99)
+dens(logistic(out$alpha.samples[,1] + (out$alpha.samples[,2]*13)), show.HPDI = 0.9)
+
 # Effect of trap_count
 mean(out$alpha.samples[,2])
 HPDI(out$alpha.samples[,2], prob = 0.99)
