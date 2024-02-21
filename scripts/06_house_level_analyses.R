@@ -155,7 +155,7 @@ set.seed(24)
 house.yes.no <- house.level.captures %>%
   mutate(Rra_at_site_character = ifelse(Rra_at_site == 1, "Present", "Absent")) %>%
   ggplot(aes(x = Rra_at_site_character, y = Mna_per_trap)) +
-  geom_violin(fill = alpha("lightgrey", 0.5)) +
+  geom_violin(fill = alpha("lightgrey", 0.3), linewidth = 0.2) +
   geom_jitter(aes(color = Rra_at_site_character), height = 0, width = 0.25, size = 5) +
   # geom_segment(
   #   x = 0.75, xend = 1.25,
@@ -327,8 +327,8 @@ fit.m1 <- house.mod.site.predictor$sample(
 )
 
 # Save/load fit model object
-fit.m1$save_object("saved_models/house_mod_Rra_at_site.RDS")
-fit.m1 <- readRDS("saved_models/house_mod_Rra_at_site.RDS")
+fit.m1$save_object("saved_models/house_mod_house_traps_Rra_at_site.RDS")
+fit.m1 <- readRDS("saved_models/house_mod_house_traps_Rra_at_site.RDS")
 
 fit.m1$diagnostic_summary()
 fit.m1$print(max_rows = 100)
@@ -431,8 +431,8 @@ fit.m2 <- house.mod.house.predictor$sample(
 )
 
 # Save/load fit model object
-fit.m2$save_object("saved_models/house_mod_Rra_at_house.RDS")
-fit.m2 <- readRDS("saved_models/house_mod_Rra_at_house.RDS")
+fit.m2$save_object("saved_models/house_mod_house_traps_Rra_at_house.RDS")
+fit.m2 <- readRDS("saved_models/house_mod_house_traps_Rra_at_house.RDS")
 
 fit.m2$diagnostic_summary()
 fit.m2$print(max_rows = 100)
@@ -487,7 +487,7 @@ p +
 
 ggsave(
   "outputs/misc/house_level_house_traps_Rra_at_house_trace_plots.jpeg",
-  width = 3500, height = 3000, units = "px"
+  width = 3500, height = 4000, units = "px"
 )
 
 
