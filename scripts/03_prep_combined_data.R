@@ -505,7 +505,7 @@ nrow(guinea.site.dat.only.houses)
 # Generate visit-level data tables for Guinea
 
 guinea.visit.dat <- EFC.agg %>%
-  group_by(Site, Visit, Longitude, Latitude, Sp) %>%
+  group_by(Date, Site, Visit, Longitude, Latitude, Sp) %>%
   summarize(
     tot_traps = sum(TotTraps),
     Tot = sum(Tot)
@@ -517,6 +517,7 @@ guinea.visit.dat <- EFC.agg %>%
     values_from = Tot
   ) %>%
   rename(
+    date = Date,
     site = Site,
     visit = Visit,
     longitude = Longitude,
@@ -581,7 +582,7 @@ assert_that(sum(guinea.site.dat$n_Mna_tested_lassa) == sum(guinea.visit.dat$n_Mn
 # And the same thing with only houses included
 guinea.visit.dat.only.houses <- EFC.agg %>%
   filter(Code.Habitat == "H") %>%
-  group_by(Site, Visit, Longitude, Latitude, Sp) %>%
+  group_by(Date, Site, Visit, Longitude, Latitude, Sp) %>%
   summarize(
     tot_traps = sum(TotTraps),
     Tot = sum(Tot)
@@ -593,6 +594,7 @@ guinea.visit.dat.only.houses <- EFC.agg %>%
     values_from = Tot
   ) %>%
   rename(
+    date = Date,
     site = Site,
     visit = Visit,
     longitude = Longitude,
@@ -722,19 +724,12 @@ visit.dat <-
   mutate(
     n_Mma = ifelse(data_source == "PREEMPT", 0, n_Mma),
     Mma_at_site = ifelse(data_source == "PREEMPT", 0, Mma_at_site),
-    # Generate a new "date_mod" variable, assuming all EFC sites were sampled 
-    # on the 15th (middle of the month)
-    date_mod = ifelse(
-      data_source == "EFC",
-      as.character(as.Date(paste0(visit, "-15"), format = "%B-%y-%d")),
-      as.character(date)
-    ),
-    # Assume Talama, visit 1 occurred in August, which roughly matches other
-    # PREEMPT visit 1 samples
+    # Generate a new "date_mod" variable, assuming Talama, visit 1 
+    # occurred in August, which roughly matches other PREEMPT visit 1 samples
     date_mod = ifelse(
       site == "Talama" & visit == "1",
       "2019-08-15",
-      date_mod
+      as.character(date)
     ),
     date_mod = as.Date(date_mod)
   ) %>%
