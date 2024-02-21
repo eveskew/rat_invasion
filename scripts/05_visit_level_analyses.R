@@ -1382,7 +1382,7 @@ draws.spill2 <- fit.spill2$draws(format = "matrix") %>%
 parameter_summary(draws.spill2, prob = 0.8)
 
 # Fit Mma model
-fit.spill3 <- visit.mod$sample(
+fit.spill3 <- spill.mod$sample(
   data = stan.dat.house.traps.Mma, 
   chains = 4, 
   parallel_chains = 4,
@@ -1406,7 +1406,7 @@ draws.spill3 <- fit.spill3$draws(format = "matrix") %>%
 parameter_summary(draws.spill3, prob = 0.8)
 
 # Fit Pda model
-fit.spill4 <- visit.mod$sample(
+fit.spill4 <- spill.mod$sample(
   data = stan.dat.house.traps.Pda, 
   chains = 4, 
   parallel_chains = 4,
@@ -1430,7 +1430,7 @@ draws.spill4 <- fit.spill4$draws(format = "matrix") %>%
 parameter_summary(draws.spill4, prob = 0.8)
 
 # Fit Pro model
-fit.spill5 <- visit.mod$sample(
+fit.spill5 <- spill.mod$sample(
   data = stan.dat.house.traps.Pro, 
   chains = 4, 
   parallel_chains = 4,
