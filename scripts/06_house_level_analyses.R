@@ -368,7 +368,7 @@ p <- bayesplot::mcmc_trace(
 # Relabel strip text
 levels(p$data$parameter) <- c(
   "grand mean", "*Rattus rattus* effect (present vs. absent)",
-  "season effect (wet vs. dry)", "σ (for site-level varying intercepts)",
+  "season effect (rainy vs. dry)", "σ (for site-level varying intercepts)",
   "σ (for visit-level varying intercepts)", "σ (for house-level varying intercepts)"
 )
 
@@ -472,7 +472,7 @@ p <- bayesplot::mcmc_trace(
 # Relabel strip text
 levels(p$data$parameter) <- c(
   "grand mean", "*Rattus rattus* effect (present vs. absent)",
-  "season effect (wet vs. dry)", "σ (for site-level varying intercepts)",
+  "season effect (rainy vs. dry)", "σ (for site-level varying intercepts)",
   "σ (for visit-level varying intercepts)", "σ (for house-level varying intercepts)"
 )
 
@@ -1249,7 +1249,7 @@ ggsave("outputs/misc/observed_predicted_Mna_site_level_occupancy.jpeg",
 
 preds <- data.frame(
   season = rep(
-    c("wet season", "dry season"), 
+    c("rainy season", "dry season"), 
     each = length(out$beta.samples[,1])*2
   ),
   site_status = rep(

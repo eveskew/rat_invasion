@@ -82,7 +82,7 @@ for(i in 1:nrow(d)) {
 d$temperature <- d$temperature - 273.15
 
 
-# t-tests for differences between wet and dry season
+# t-tests for differences between rainy and dry season
 t.test(precipitation ~ wet_season, data = d, var.equal = TRUE)
 t.test(temperature ~ wet_season, data = d, var.equal = TRUE)
 
@@ -99,7 +99,7 @@ p <- ggplot() +
   xlab("Season") +
   ylab("Total Monthly Precipitation (mm)") +
   ylim(0, 800) +
-  scale_x_discrete(labels = c("Dry", "Wet")) +
+  scale_x_discrete(labels = c("Dry", "Rainy")) +
   scale_color_manual(values = c("wheat3", "steelblue")) +
   theme_minimal() +
   theme(
@@ -116,7 +116,7 @@ t <- ggplot() +
   xlab("Season") +
   ylab("Monthly Average Temperature (°C)") +
   ylim(0, 40) +
-  scale_x_discrete(labels = c("Dry", "Wet")) +
+  scale_x_discrete(labels = c("Dry", "Rainy")) +
   scale_color_manual(values = c("wheat3", "steelblue")) +
   theme_minimal() +
   theme(

@@ -963,6 +963,7 @@ mc.b <- preds %>%
     legend.position = "none"
   )
 
+set.seed(2)
 cowplot::plot_grid(
   mc.a, mc.b,
   nrow = 1,

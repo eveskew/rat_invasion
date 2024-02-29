@@ -257,7 +257,7 @@ p <- bayesplot::mcmc_trace(
 # Relabel strip text
 levels(p$data$parameter) <- c(
   "grand mean", "*Rattus rattus* effect (present vs. absent)",
-  "season effect (wet vs. dry)", "σ (for site-level varying intercepts)",
+  "season effect (rainy vs. dry)", "σ (for site-level varying intercepts)",
   "σ (for visit-level varying intercepts)"
 )
 
@@ -445,7 +445,7 @@ p <- bayesplot::mcmc_trace(
 # Relabel strip text
 levels(p$data$parameter) <- c(
   "grand mean", "*Rattus rattus* effect (present vs. absent)",
-  "season effect (wet vs. dry)", "σ (for site-level varying intercepts)",
+  "season effect (rainy vs. dry)", "σ (for site-level varying intercepts)",
   "σ (for visit-level varying intercepts)"
 )
 
@@ -737,10 +737,10 @@ c.house <- ggplot(
 # Plot implications of the two models with Rra_at_site predictors
 
 # Generate predictions for the all traps model, for all combinations of 
-# wet/dry seasons, Rattus rattus present/absent
+# rainy/dry seasons, Rattus rattus present/absent
 preds.all <- data.frame(
   season = rep(
-    c("wet season", "dry season"), 
+    c("rainy season", "dry season"), 
     each = length(draws.m1$a)*2
   ),
   site_status = rep(
@@ -757,10 +757,10 @@ preds.all <- data.frame(
 )
 
 # Generate predictions for the house traps model, for all combinations of 
-# wet/dry seasons, Rattus rattus present/absent
+# rainy/dry seasons, Rattus rattus present/absent
 preds.house <- data.frame(
   season = rep(
-    c("wet season", "dry season"), 
+    c("rainy season", "dry season"), 
     each = length(draws.m2$a)*2
   ),
   site_status = rep(
@@ -961,7 +961,7 @@ p <- bayesplot::mcmc_trace(
 # Relabel strip text
 levels(p$data$parameter) <- c(
   "grand mean", "*Rattus rattus* effect (present vs. absent)",
-  "season effect (wet vs. dry)", "σ (for site-level varying intercepts)",
+  "season effect (rainy vs. dry)", "σ (for site-level varying intercepts)",
   "σ (for visit-level varying intercepts)"
 )
 
@@ -1119,7 +1119,7 @@ spill.map.house <- ggplot() +
 
 preds <- data.frame(
   season = rep(
-    c("wet season", "dry season"), 
+    c("rainy season", "dry season"), 
     each = length(draws.spill$a)*2
   ),
   site_status = rep(
