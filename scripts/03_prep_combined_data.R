@@ -538,15 +538,14 @@ guinea.visit.dat <- EFC.agg %>%
     Pda_at_site = ifelse(n_Pda > 0, 1, 0),
     Pro_at_site = ifelse(n_Pro > 0, 1, 0),
     n_catch = EFC.agg %>%
-      group_by(Site, Visit) %>%
+      group_by(Date, Site, Visit) %>%
       summarize(n_catch = sum(Tot)) %>%
       ungroup() %>%
       pull(n_catch)
   ) %>%
   # add wet season variable
   mutate(
-    month = substr(visit, 1, 3),
-    month = match(month, month.abb),
+    month = lubridate::month(date),
     wet_season = ifelse(month %in% 5:11, 1, 0)
   ) %>%
   # tag as EFC data
@@ -611,7 +610,7 @@ guinea.visit.dat.only.houses <- EFC.agg %>%
     Rra_per_trap = n_Rra/tot_traps,
     n_catch = EFC.agg %>%
       filter(Code.Habitat == "H") %>%
-      group_by(Site, Visit) %>%
+      group_by(Date, Site, Visit) %>%
       summarize(n_catch = sum(Tot)) %>%
       ungroup() %>%
       pull(n_catch)
@@ -624,8 +623,7 @@ guinea.visit.dat.only.houses <- EFC.agg %>%
   ) %>%
   # add wet season variable
   mutate(
-    month = substr(visit, 1, 3),
-    month = match(month, month.abb),
+    month = lubridate::month(date),
     wet_season = ifelse(month %in% 5:11, 1, 0)
   ) %>%
   # tag as EFC data
@@ -677,6 +675,8 @@ site.dat <-
     data_source
   )
 
+assert_that(sum(site.dat$n_catch >= site.dat$n_Mna) == nrow(site.dat))
+
 site.dat.only.houses <- 
   bind_rows(sl.site.dat.only.houses, guinea.site.dat.only.houses) %>%
   mutate(
@@ -691,6 +691,8 @@ site.dat.only.houses <-
     n_Mna_neg_lassa, n_Mna_pos_lassa, n_Mna_tested_lassa,
     data_source
   )
+
+assert_that(sum(site.dat.only.houses$n_catch >= site.dat.only.houses$n_Mna) == nrow(site.dat.only.houses))
 
 # Plot observed catch per trap for both species by site
 site.dat %>%
@@ -752,6 +754,8 @@ visit.dat <-
     data_source
   )
 
+assert_that(sum(visit.dat$n_catch >= visit.dat$n_Mna) == nrow(visit.dat))
+
 visit.dat.only.houses <- 
   bind_rows(
     sl.visit.dat.only.houses %>%
@@ -782,6 +786,8 @@ visit.dat.only.houses <-
     n_Mna_neg_lassa, n_Mna_pos_lassa, n_Mna_tested_lassa,
     data_source
   )
+
+assert_that(sum(visit.dat.only.houses$n_catch >= visit.dat.only.houses$n_Mna) == nrow(visit.dat.only.houses))
 
 # Plot observed catch per trap for both species by site
 visit.dat %>%
