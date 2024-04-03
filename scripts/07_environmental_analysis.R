@@ -82,6 +82,11 @@ for(i in 1:nrow(d)) {
 d$temperature <- d$temperature - 273.15
 
 
+# Summarize precipitation and temperature variables
+summary(d$precipitation)
+summary(d$temperature)
+
+
 # t-tests for differences between rainy and dry season
 t.test(precipitation ~ wet_season, data = d, var.equal = TRUE)
 t.test(temperature ~ wet_season, data = d, var.equal = TRUE)
