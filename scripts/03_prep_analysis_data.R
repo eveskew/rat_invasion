@@ -4,8 +4,9 @@ library(rnaturalearthdata)
 library(sf)
 library(assertthat)
 
-# The goal of this script is to combine rodent trapping data from Sierra Leone
-# and Guinea, saving intermediate data files to "data/clean/combined"
+# The goal of this script is to generate all data files necessary for downstream
+# analyses, saving intermediate data files to "data/clean/combined", 
+# "data/clean/house", and "data/clean/occupancy"
 
 #==============================================================================
 
@@ -952,3 +953,199 @@ write_csv(site.dat.only.houses, "data/clean/combined/site_level_data_only_houses
 # Save visit-level trapping data from Sierra Leone and Guinea
 write_csv(visit.dat, "data/clean/combined/visit_level_data.csv")
 write_csv(visit.dat.only.houses, "data/clean/combined/visit_level_data_only_houses.csv")
+
+#==============================================================================
+
+
+# Generate house-level trapping data for Sierra Leone
+
+# Generate house-level data frame
+house.level.captures <- track.level.captures %>%
+  filter(habitat_code == "H") %>%
+  # Remove zero trapping effort houses!
+  filter(tot_traps != 0) %>%
+  mutate(
+    house_id = paste(site, visit, track_id, sep = "-"),
+    house_w_only_Mna = n_Mna > 0 & n_Rra == 0,
+    house_w_only_Rra = n_Mna == 0 & n_Rra > 0,
+    house_w_both = n_Mna > 0 & n_Rra > 0,
+    house_w_neither = n_Mna == 0 & n_Rra == 0,
+    Mna_per_trap = n_Mna/tot_traps,
+    Rra_at_house = ifelse(n_Rra > 0, 1, 0),
+    Mer_at_house = ifelse(n_Mer > 0, 1, 0),
+    Pda_at_house = ifelse(n_Pda > 0, 1, 0),
+    Pro_at_house = ifelse(n_Pro > 0, 1, 0)
+  ) %>%
+  left_join(
+    .,
+    visit.dat %>%
+      filter(data_source == "PREEMPT") %>%
+      select(
+        site, visit, date, 
+        Rra_at_site, Mer_at_site, Pda_at_site, Pro_at_site,
+        wet_season
+      ) %>%
+      mutate(visit = as.numeric(visit)),
+    by = c("site", "visit", "date")
+  )
+
+# Save house-level trapping data from Sierra Leone
+write_csv(house.level.captures, "data/clean/house/house_level_data.csv")
+
+#==============================================================================
+
+
+# Data preparation for occupancy analyses using house-level data from Sierra
+# Leone
+
+o <- summary.trap.dat %>%
+  # get rid of no-house information
+  filter(habitat_code == "H") %>%
+  # create total trap counts by night and house IDs
+  mutate(
+    date = as.Date(date),
+    n1_traps = n1_traps - n1_ce - n1_miss,
+    n2_traps = n2_traps - n2_ce - n2_miss,
+    n3_traps = n3_traps - n3_ce - n3_miss,
+    n4_traps = n4_traps - n4_ce - n4_miss,
+    house_id = paste(site, visit, track_id, sep = "-")
+  ) %>%
+  # select only a subset of relevant columns
+  select(
+    date, site, visit, track_id, house_id,
+    n1_traps, n2_traps, n3_traps, n4_traps
+  ) %>%
+  # pivot longer to get each row as a night of trapping at a given house
+  pivot_longer(
+    cols = starts_with("n"),
+    names_to = "night",
+    values_to = "trap_count"
+  ) %>%
+  # eliminate any nights without traps out
+  filter(
+    trap_count > 0,
+    !is.na(trap_count)
+  ) %>%
+  # clean up the "night" variable and "date" column to actually correspond 
+  # with each night of trapping
+  mutate(
+    night = as.numeric(as.vector(str_match(night, "[0-9]"))),
+    date = case_when(
+      night == 1 ~ date,
+      night == 2 ~ date + days(1),
+      night == 3 ~ date + days(2),
+      night == 4 ~ date + days(3)
+    )
+  )
+
+# Add on info about rodent catch for each of these trapping occasions
+o2 <- o %>%
+  left_join(
+    .,
+    capture.dat %>%
+      filter(habitat_code == "H") %>%
+      select(site, visit, track_id, night, species),
+    by = c("site", "visit", "track_id", "night")
+  ) %>%
+  group_by(date, site, visit, track_id, house_id, night, trap_count) %>%
+  summarize(
+    n_rodents = sum(!is.na(species)),
+    n_Mna = sum(species == "Mastomys natalensis"),
+    n_Rra = sum(species == "Rattus rattus")
+  ) %>%
+  ungroup() %>%
+  mutate(
+    n_Mna = ifelse(is.na(n_Mna), 0, n_Mna),
+    n_Rra = ifelse(is.na(n_Rra), 0, n_Rra),
+    Mna_detected = ifelse(n_Mna > 0, 1, 0),
+    Rra_detected = ifelse(n_Rra > 0, 1, 0)
+  ) %>%
+  arrange(site, visit, house_id, night) %>%
+  left_join(
+    .,
+    house.level.captures %>%
+      select(house_id, Rra_at_site, wet_season),
+    by = "house_id"
+  )
+
+# Pivot longer to get all trapping occasions from a single house on one row
+o3 <- o2 %>%
+  pivot_wider(
+    id_cols = c(site, visit, track_id, house_id, Rra_at_site, wet_season),
+    names_from = "night",
+    values_from = "Mna_detected"
+  )
+
+# If there are 3 NAs in a given row it means we only have one observation: drop
+good.indices <- which(rowSums(is.na(o3[, 7:10])) < 3)
+o3 <- slice(o3, good.indices)
+assert_that(nrow(o3) == 560)
+
+# Save Mna detection information
+write_csv(o3, "data/clean/occupancy/Mna_detection.csv")
+
+# Generate occupancy covariates
+occ.covs <- data.frame(
+  site = o3$site,
+  site_numeric = as.numeric(as.factor(o3$site)),
+  visit_numeric = paste0(o3$site, "-", o3$visit) %>%
+    as.factor() %>%
+    as.numeric(),
+  house_numeric = as.numeric(as.factor(o3$house_id)),
+  Rra_at_site = o3$Rra_at_site,
+  wet_season = o3$wet_season
+)
+assert_that(nrow(occ.covs) == 560)
+
+# Save occupancy covariate data
+write_csv(
+  occ.covs, 
+  "data/clean/occupancy/occupancy_covariates.csv"
+)
+
+# Generate detection covariate: trap count
+det.cov.trap.count <- o2 %>%
+  pivot_wider(
+    id_cols = house_id,
+    names_from = "night",
+    values_from = "trap_count"
+  ) %>%
+  slice(good.indices) %>%
+  select(-house_id)
+assert_that(nrow(det.cov.trap.count) == 560)
+
+# Save detection covariate data
+write_csv(det.cov.trap.count, "data/clean/occupancy/detection_trap_count_covariate.csv")
+
+# Generate detection covariate: cumulative Mna catch
+temp.cumulative.counts <- o2 %>%
+  group_by(house_id) %>%
+  mutate(cumulative_Mna_count = cumsum(n_Mna)) %>%
+  select(site, visit, house_id, night, cumulative_Mna_count)
+
+det.cov.cumulative.Mna.count <- o2 %>%
+  left_join(
+    .,
+    temp.cumulative.counts %>%
+      mutate(night = night + 1),
+    by = c("site", "visit", "house_id", "night")
+  ) %>%
+  group_by(house_id) %>%
+  # for every house, the first trapping occasion has 0 cumulative catch
+  mutate(cumulative_Mna_count = replace(cumulative_Mna_count, 1, 0)) %>%
+  ungroup() %>%
+  pivot_wider(
+    id_cols = house_id,
+    names_from = "night",
+    values_from = "cumulative_Mna_count"
+  ) %>%
+  ungroup() %>%
+  slice(good.indices) %>%
+  select(-house_id)
+assert_that(nrow(det.cov.cumulative.Mna.count) == 560)
+
+# Save detection covariate data
+write_csv(
+  det.cov.cumulative.Mna.count, 
+  "data/clean/occupancy/detection_cumulative_Mna_count_covariate.csv"
+)
