@@ -74,8 +74,8 @@ housetrap.dat %>%
   )
 
 # Import table giving the house traps with known georeferencing issues
-# Note: these are four total houses that have assigned lat/longs, but we know 
-# they're erroneous
+# Note: in addition to the two houses with missing lat/long info, there are 
+# four total houses that have assigned lat/longs but we know they're erroneous
 housetrap.dat <- housetrap.dat %>%
   full_join(
     ., read_csv("data/cleaning_tables/house_trap_georeferencing_issues.csv"),
