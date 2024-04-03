@@ -194,6 +194,14 @@ house.yes.no <- house.level.captures %>%
 
 house.yes.no
 
+# Save source data for Figure 2a
+house.level.captures %>%
+  select(
+    date, site, visit, track_id, habitat_code, house_id,
+    tot_traps, n_Mna, Mna_per_trap, Rra_at_site
+  ) %>%
+  write_excel_csv("data/source_data/Figure2a.csv")
+
 # Generate a plot that breaks out the data by season
 house.level.captures.summary <- house.level.captures %>%
   group_by(Rra_at_site, wet_season) %>%
@@ -1279,6 +1287,10 @@ preds %>%
     upper_99 = HPDI(occ_prob, 0.99)[2]
   )
 
+# Save source data for Figure 2b
+preds %>%
+  write_excel_csv("data/source_data/Figure2b.csv")
+
 #==============================================================================
 
 
@@ -1372,3 +1384,93 @@ cowplot::plot_grid(
 
 ggsave("outputs/house_level_analyses.jpeg", 
        width = 3000, height = 1500, unit = "px")
+
+# Make pdf version of the same plot
+
+set.seed(24)
+
+house.yes.no <- house.level.captures %>%
+  mutate(Rra_at_site_character = ifelse(Rra_at_site == 1, "Present", "Absent")) %>%
+  ggplot(aes(x = Rra_at_site_character, y = Mna_per_trap)) +
+  geom_violin(fill = alpha("lightgrey", 0.3), linewidth = 0.2/2) +
+  geom_jitter(aes(color = Rra_at_site_character), height = 0, width = 0.25, size = 5/2) +
+  # geom_segment(
+  #   x = 0.75, xend = 1.25,
+  #   y = house.level.captures %>%
+  #     filter(Rra_at_site == 0) %>%
+  #     pull(Mna_per_trap) %>%
+  #     mean(),
+  #   yend = house.level.captures %>%
+  #     filter(Rra_at_site == 0) %>%
+  #     pull(Mna_per_trap) %>%
+  #     mean(),
+  #   color = "black",
+#   linewidth = 2
+# ) +
+# geom_segment(
+#   x = 1.75, xend = 2.25,
+#   y = house.level.captures %>%
+#     filter(Rra_at_site == 1) %>%
+#     pull(Mna_per_trap) %>%
+#     mean(),
+#   yend = house.level.captures %>%
+#     filter(Rra_at_site == 1) %>%
+#     pull(Mna_per_trap) %>%
+#     mean(),
+#   color = "darkred",
+#   linewidth = 2
+# ) +
+xlab(expression(paste(italic("Rattus rattus"), " status at site"))) +
+  ylab(expression(atop(italic("Mastomys natalensis"), "catch per trap"))) +
+  scale_color_manual(values = c(alpha("black", 0.15), alpha("darkred", 0.15))) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 20/2),
+    legend.position = "none"
+  )
+
+occ.plot <- preds %>%
+  group_by(season, site_status) %>%
+  summarize(
+    mean = mean(occ_prob),
+    lower99 = HPDI(occ_prob, 0.99)[1],
+    upper99 = HPDI(occ_prob, 0.99)[2],
+    lower90 = HPDI(occ_prob, 0.9)[1],
+    upper90 = HPDI(occ_prob, 0.9)[2]
+  ) %>%
+  ungroup() %>%
+  ggplot(aes(x = site_status, y = mean, color = season, group = season)) +
+  geom_linerange(
+    aes(ymin = lower99, ymax = upper99), 
+    position = position_dodge2(width = val.dodge),
+    linewidth = 1/2,
+    key_glyph = "rect"
+  ) +
+  geom_linerange(
+    aes(ymin = lower90, ymax = upper90), 
+    position = position_dodge2(width = val.dodge),
+    linewidth = 3/2
+  ) +
+  geom_point(position = position_dodge2(width = val.dodge), size = 5/2) +
+  xlab(expression(paste(italic("Rattus rattus"), " status at site"))) +
+  ylab(expression(atop(italic("Mastomys natalensis"), "house-level occupancy"))) +
+  scale_y_continuous(limits = c(0, 0.7)) +
+  theme_minimal() +
+  scale_color_manual(values = c("wheat3", "steelblue")) +
+  theme(
+    text = element_text(size = 21/2),
+    legend.title = element_blank(),
+    legend.text = element_text(size = 12/2),
+    legend.position = c(0.7, 0.82),
+    legend.background = element_rect(fill = "white", colour = 0)
+  )
+
+cowplot::plot_grid(
+  house.yes.no, occ.plot, 
+  nrow = 1,
+  labels = "auto",
+  label_size = 22/2
+)
+
+ggsave("outputs/Figure2.pdf", 
+       width = 180, height = 90, unit = "mm")

@@ -731,6 +731,15 @@ c.house <- ggplot(
     text = element_text(size = 20)
   )
 
+# Save source data for Figure 1a-c
+site.dat.only.houses %>%
+  select(
+    site, latitude, longitude, tot_traps, 
+    n_Mna, n_Rra, Mna_per_trap, Rra_per_trap,
+    data_source
+  ) %>%
+  write_excel_csv("data/source_data/Figure1a-c.csv")
+
 #==============================================================================
 
 
@@ -886,6 +895,10 @@ d.house <- preds.house %>%
     legend.background = element_rect(fill = "white", colour = 0)
   )
 
+# Save source data for Figure 1d
+preds.house %>%
+  write_excel_csv("data/source_data/Figure1d.csv")
+
 cowplot::plot_grid(
   a.house, b.house, c.house, d.house,
   nrow = 2,
@@ -899,6 +912,122 @@ ggsave(
   width = 4000, 
   height = 3500, 
   unit = "px"
+)
+
+# Make pdf version of the same plot
+
+a.house <- ggplot() +
+  geom_sf(data = sl, fill = alpha("darkgreen", 0.9), color = "black", size = 1/2) +
+  geom_sf(data = site.points, aes(color = Mna_per_trap), size = 5/2) +
+  scale_color_gradient(
+    low = "white",
+    high = "darkred",
+    breaks = breaks.house,
+    limits = c(0, 0.25)
+  ) +
+  guides(
+    color = guide_legend(
+      title = expression(paste(italic("Mastomys natalensis"), " catch per trap")),
+      title.position = "top",
+      title.hjust = 0.5,
+      nrow = 1
+    )
+  ) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 18/2),
+    axis.text = element_blank(),
+    legend.position = "bottom",
+    panel.grid = element_blank()
+  )
+
+b.house <- ggplot() +
+  geom_sf(data = sl, fill = alpha("darkgreen", 0.9), color = "black", size = 1/2) +
+  geom_sf(data = site.points, aes(color = Rra_per_trap), size = 5/2) +
+  scale_color_gradient(
+    low = "white",
+    high = "darkred",
+    breaks = breaks.house,
+    limits = c(0, 0.25)
+  ) +
+  guides(
+    color = guide_legend(
+      title = expression(paste(italic("Rattus rattus"), " catch per trap")),
+      title.position = "top",
+      title.hjust = 0.5,
+      nrow = 1
+    )
+  ) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 18/2),
+    axis.text = element_blank(),
+    legend.position = "bottom",
+    panel.grid = element_blank()
+  )
+
+c.house <- ggplot(
+  data = site.dat.only.houses,
+  aes(x = Rra_per_trap, y = Mna_per_trap)) +
+  geom_point(size = 6/2) +
+  xlab(expression(paste(italic("Rattus rattus"), " catch per trap"))) +
+  ylab(expression(atop(italic("Mastomys natalensis"), "catch per trap"))) +
+  scale_x_continuous(breaks = breaks.house, limits = c(0, 0.25)) +
+  scale_y_continuous(breaks = breaks.house, limits = c(0, 0.25)) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 20/2)
+  )
+
+d.house <- preds.house %>%
+  group_by(season, site_status) %>%
+  summarize(
+    mean = mean(catch_per_trap),
+    lower99 = HPDI(catch_per_trap, 0.99)[1],
+    upper99 = HPDI(catch_per_trap, 0.99)[2],
+    lower90 = HPDI(catch_per_trap, 0.9)[1],
+    upper90 = HPDI(catch_per_trap, 0.9)[2]
+  ) %>%
+  ungroup() %>%
+  ggplot(aes(x = site_status, y = mean, color = season, group = season)) +
+  geom_linerange(
+    aes(ymin = lower99, ymax = upper99), 
+    position = position_dodge2(width = val.dodge), 
+    linewidth = 1/2,
+    key_glyph = "rect"
+  ) +
+  geom_linerange(
+    aes(ymin = lower90, ymax = upper90), 
+    position = position_dodge2(width = val.dodge), 
+    linewidth = 3/2
+  ) +
+  geom_point(position = position_dodge2(width = val.dodge), size = 5/2) +
+  xlab(expression(paste(italic("Rattus rattus"), " status at site"))) +
+  ylab(expression(atop(italic("Mastomys natalensis"), "catch per trap (average site)"))) +
+  scale_y_continuous(breaks = breaks.house, limits = c(0, 0.1)) +
+  theme_minimal() +
+  scale_color_manual(values = c("wheat3", "steelblue")) +
+  theme(
+    text = element_text(size = 21/2),
+    legend.title = element_blank(),
+    legend.text = element_text(size = 18/2),
+    legend.position = c(0.7, 0.75),
+    legend.background = element_rect(fill = "white", colour = 0)
+  )
+
+cowplot::plot_grid(
+  a.house, b.house, c.house, d.house,
+  nrow = 2,
+  rel_heights = c(0.55, 0.45),
+  labels = "auto",
+  label_size = 22/2
+)
+
+ggsave(
+  "outputs/Figure1.pdf", 
+  width = 180, 
+  height = 158, 
+  unit = "mm"
 )
 
 #==============================================================================
@@ -1117,6 +1246,15 @@ spill.map.house <- ggplot() +
     panel.grid = element_blank()
   )
 
+# Save source data for Figure 3a
+site.dat.only.houses %>%
+  select(
+    site, latitude, longitude, tot_traps, 
+    n_Mna, n_Mna_tested_lassa, n_Mna_neg_lassa, n_Mna_pos_lassa,
+    data_source
+  ) %>%
+  write_excel_csv("data/source_data/Figure3a.csv")
+
 preds <- data.frame(
   season = rep(
     c("rainy season", "dry season"), 
@@ -1171,6 +1309,10 @@ spill.results.house <- preds %>%
     legend.background = element_rect(fill = "white", colour = 0)
   )
 
+# Save source data for Figure 3b
+preds %>%
+  write_excel_csv("data/source_data/Figure3b.csv")
+
 cowplot::plot_grid(
   spill.map.house, spill.results.house,
   labels = "auto",
@@ -1182,6 +1324,87 @@ ggsave(
   width = 4000, 
   height = 2000, 
   unit = "px"
+)
+
+# Make pdf version of the same plot
+
+spill.map.house <- ggplot() +
+  geom_sf(data = sl, fill = alpha("darkgreen", 0.9), color = "black", size = 1/2) +
+  geom_sf(data = site.points, aes(color = n_Mna_pos_lassa/tot_traps), size = 5/2) +
+  scale_color_gradient(
+    low = "white",
+    high = "darkred",
+    breaks = breaks.spill,
+    limits = c(0, 0.02)
+  ) +
+  guides(
+    color = guide_legend(
+      title = expression(
+        atop(
+          paste("Lassa-positive ", italic("Mastomys natalensis")), 
+          "catch per trap"
+        )
+      ),
+      title.position = "top",
+      title.hjust = 0.5,
+      nrow = 1
+    )
+  ) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 20/2),
+    axis.text = element_blank(),
+    legend.position = "bottom",
+    panel.grid = element_blank()
+  )
+
+spill.results.house <- preds %>%
+  group_by(season, site_status) %>%
+  summarize(
+    mean = mean(catch_per_trap),
+    lower99 = HPDI(catch_per_trap, 0.99)[1],
+    upper99 = HPDI(catch_per_trap, 0.99)[2],
+    lower90 = HPDI(catch_per_trap, 0.9)[1],
+    upper90 = HPDI(catch_per_trap, 0.9)[2]
+  ) %>%
+  ungroup() %>%
+  ggplot(aes(x = site_status, y = mean, color = season, group = season)) +
+  geom_linerange(
+    aes(ymin = lower99, ymax = upper99), 
+    position = position_dodge2(width = val.dodge), 
+    linewidth = 1/2,
+    key_glyph = "rect"
+  ) +
+  geom_linerange(
+    aes(ymin = lower90, ymax = upper90), 
+    position = position_dodge2(width = val.dodge), 
+    linewidth = 3/2
+  ) +
+  geom_point(position = position_dodge2(width = val.dodge), size = 5/2) +
+  xlab(expression(paste(italic("Rattus rattus"), " status at site"))) +
+  ylab(expression(atop(paste("Lassa-positive ", italic("Mastomys natalensis")), "catch per trap (average site)"))) +
+  scale_y_continuous(breaks = breaks.spill, limits = c(0, 0.012)) +
+  theme_minimal() +
+  scale_color_manual(values = c("wheat3", "steelblue")) +
+  theme(
+    text = element_text(size = 21/2),
+    legend.title = element_blank(),
+    legend.text = element_text(size = 18/2),
+    legend.position = c(0.7, 0.82),
+    legend.background = element_rect(fill = "white", colour = 0)
+  )
+
+cowplot::plot_grid(
+  spill.map.house, spill.results.house,
+  labels = "auto",
+  label_size = 22/2
+)
+
+ggsave(
+  "outputs/Figure3.pdf", 
+  width = 180, 
+  height = 90, 
+  unit = "mm"
 )
 
 #==============================================================================
