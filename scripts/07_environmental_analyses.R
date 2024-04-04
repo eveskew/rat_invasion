@@ -136,5 +136,5 @@ cowplot::plot_grid(
   label_size = 22
 )
 
-ggsave("outputs/misc/environmental_data_by_season.jpeg",
+ggsave("outputs/supplementary/environmental_data_by_season.jpeg",
        width = 4000, height = 2000, units = "px")
