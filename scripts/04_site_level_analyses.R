@@ -1,6 +1,5 @@
 library(tidyverse)
 library(rethinking)
-library(lubridate)
 library(rnaturalearth)
 library(rnaturalearthdata)
 library(sf)
