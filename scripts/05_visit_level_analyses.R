@@ -134,7 +134,8 @@ panel.a <- d %>%
   theme(
     text = element_text(size = 24),
     legend.title = element_blank(),
-    legend.position = c(0.8, 0.85)
+    legend.position = "inside",
+    legend.position.inside = c(0.8, 0.85)
   )
 
 panel.b <- d %>%
@@ -167,7 +168,8 @@ panel.b <- d %>%
   theme(
     text = element_text(size = 24),
     legend.title = element_blank(),
-    legend.position = c(0.8, 0.85)
+    legend.position = "inside",
+    legend.position.inside = c(0.8, 0.85)
   )
 
 cowplot::plot_grid(
@@ -177,7 +179,7 @@ cowplot::plot_grid(
   label_size = 22
 )
 
-ggsave("outputs/misc/prior_comparison.jpeg", 
+ggsave("outputs/supplementary/prior_comparison.jpeg", 
        width = 3500, height = 4000, units = "px")
 
 #==============================================================================
@@ -271,7 +273,7 @@ p +
   )
 
 ggsave(
-  "outputs/misc/visit_level_all_traps_trace_plots.jpeg",
+  "outputs/supplementary/visit_level_all_traps_trace_plots.jpeg",
   width = 3500, height = 4000, units = "px"
 )
 
@@ -459,7 +461,7 @@ p +
   )
 
 ggsave(
-  "outputs/misc/visit_level_house_traps_trace_plots.jpeg",
+  "outputs/supplementary/visit_level_house_traps_trace_plots.jpeg",
   width = 3500, height = 4000, units = "px"
 )
 
@@ -630,12 +632,6 @@ b.all <- ggplot() +
     panel.grid = element_blank()
   )
 
-top.row.all <- cowplot::plot_grid(
-  a.all, b.all,
-  labels = "auto",
-  label_size = 22
-)
-
 c.all <- ggplot(
   data = site.dat,
   aes(x = Rra_per_trap, y = Mna_per_trap)) +
@@ -711,12 +707,6 @@ b.house <- ggplot() +
     legend.position = "bottom",
     panel.grid = element_blank()
   )
-
-top.row.house <- cowplot::plot_grid(
-  a.house, b.house,
-  labels = "auto",
-  label_size = 22
-)
 
 c.house <- ggplot(
   data = site.dat.only.houses,
@@ -840,7 +830,8 @@ d.all <- preds.all %>%
     text = element_text(size = 21),
     legend.title = element_blank(),
     legend.text = element_text(size = 18),
-    legend.position = c(0.7, 0.80),
+    legend.position = "inside",
+    legend.position.inside = c(0.7, 0.80),
     legend.background = element_rect(fill = "white", colour = 0)
   )
 
@@ -891,7 +882,8 @@ d.house <- preds.house %>%
     text = element_text(size = 21),
     legend.title = element_blank(),
     legend.text = element_text(size = 18),
-    legend.position = c(0.7, 0.75),
+    legend.position = "inside",
+    legend.position.inside = c(0.7, 0.75),
     legend.background = element_rect(fill = "white", colour = 0)
   )
 
@@ -1011,7 +1003,8 @@ d.house <- preds.house %>%
     text = element_text(size = 21/2),
     legend.title = element_blank(),
     legend.text = element_text(size = 18/2),
-    legend.position = c(0.7, 0.75),
+    legend.position = "inside",
+    legend.position.inside = c(0.7, 0.75),
     legend.background = element_rect(fill = "white", colour = 0)
   )
 
@@ -1104,7 +1097,7 @@ p +
   )
 
 ggsave(
-  "outputs/misc/spillover_risk_model_visit_level_house_traps_trace_plots.jpeg",
+  "outputs/supplementary/spillover_risk_model_visit_level_house_traps_trace_plots.jpeg",
   width = 3500, height = 4000, units = "px"
 )
 
@@ -1305,7 +1298,8 @@ spill.results.house <- preds %>%
     text = element_text(size = 21),
     legend.title = element_blank(),
     legend.text = element_text(size = 18),
-    legend.position = c(0.7, 0.82),
+    legend.position = "inside",
+    legend.position.inside = c(0.7, 0.82),
     legend.background = element_rect(fill = "white", colour = 0)
   )
 
@@ -1390,7 +1384,8 @@ spill.results.house <- preds %>%
     text = element_text(size = 21/2),
     legend.title = element_blank(),
     legend.text = element_text(size = 18/2),
-    legend.position = c(0.7, 0.82),
+    legend.position = "inside",
+    legend.position.inside = c(0.7, 0.82),
     legend.background = element_rect(fill = "white", colour = 0)
   )
 
@@ -1568,7 +1563,7 @@ dat.ridges %>%
   )
 
 ggsave(
-  "outputs/misc/species_presence_effect_posteriors_visit_level.jpeg", 
+  "outputs/supplementary/species_presence_effect_posteriors_visit_level.jpeg", 
   width = 3000, 
   height = 2000, 
   unit = "px"
@@ -1720,7 +1715,7 @@ dat.ridges %>%
   )
 
 ggsave(
-  "outputs/misc/species_presence_effect_posteriors_spillover_risk.jpeg", 
+  "outputs/supplementary/species_presence_effect_posteriors_spillover_risk.jpeg", 
   width = 3000, 
   height = 2000, 
   unit = "px"
