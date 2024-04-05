@@ -910,15 +910,15 @@ ggsave(
 
 a.house <- ggplot() +
   geom_sf(data = sl, fill = alpha("darkgreen", 0.9), color = "black", size = 1/2) +
-  geom_sf(data = site.points, aes(color = Mna_per_trap), size = 5/2) +
-  scale_color_gradient(
+  geom_sf(data = site.points, aes(fill = Mna_per_trap), color = "black", shape = 21, size = 3) +
+  scale_fill_gradient(
     low = "white",
     high = "darkred",
     breaks = breaks.house,
     limits = c(0, 0.25)
   ) +
   guides(
-    color = guide_legend(
+    fill = guide_legend(
       title = expression(paste(italic("Mastomys natalensis"), " catch per trap")),
       title.position = "top",
       title.hjust = 0.5,
@@ -927,23 +927,24 @@ a.house <- ggplot() +
   ) +
   theme_minimal() +
   theme(
-    text = element_text(size = 18/2),
+    text = element_text(size = 20/2),
     axis.text = element_blank(),
     legend.position = "bottom",
+    legend.key.width = unit(1, "mm"),
     panel.grid = element_blank()
   )
 
 b.house <- ggplot() +
   geom_sf(data = sl, fill = alpha("darkgreen", 0.9), color = "black", size = 1/2) +
-  geom_sf(data = site.points, aes(color = Rra_per_trap), size = 5/2) +
-  scale_color_gradient(
+  geom_sf(data = site.points, aes(fill = Rra_per_trap), color = "black", shape = 21, size = 3) +
+  scale_fill_gradient(
     low = "white",
     high = "darkred",
     breaks = breaks.house,
     limits = c(0, 0.25)
   ) +
   guides(
-    color = guide_legend(
+    fill = guide_legend(
       title = expression(paste(italic("Rattus rattus"), " catch per trap")),
       title.position = "top",
       title.hjust = 0.5,
@@ -952,9 +953,10 @@ b.house <- ggplot() +
   ) +
   theme_minimal() +
   theme(
-    text = element_text(size = 18/2),
+    text = element_text(size = 20/2),
     axis.text = element_blank(),
     legend.position = "bottom",
+    legend.key.width = unit(1, "mm"),
     panel.grid = element_blank()
   )
 
@@ -1000,11 +1002,12 @@ d.house <- preds.house %>%
   theme_minimal() +
   scale_color_manual(values = c("wheat3", "steelblue")) +
   theme(
-    text = element_text(size = 21/2),
+    text = element_text(size = 20/2),
     legend.title = element_blank(),
-    legend.text = element_text(size = 18/2),
+    legend.text = element_text(size = 9),
+    legend.key.height = unit(4, "mm"),
     legend.position = "inside",
-    legend.position.inside = c(0.7, 0.75),
+    legend.position.inside = c(0.7, 0.725),
     legend.background = element_rect(fill = "white", colour = 0)
   )
 
@@ -1324,15 +1327,15 @@ ggsave(
 
 spill.map.house <- ggplot() +
   geom_sf(data = sl, fill = alpha("darkgreen", 0.9), color = "black", size = 1/2) +
-  geom_sf(data = site.points, aes(color = n_Mna_pos_lassa/tot_traps), size = 5/2) +
-  scale_color_gradient(
+  geom_sf(data = site.points, aes(fill = n_Mna_pos_lassa/tot_traps), color = "black", shape = 21, size = 3) +
+  scale_fill_gradient(
     low = "white",
     high = "darkred",
     breaks = breaks.spill,
     limits = c(0, 0.02)
   ) +
   guides(
-    color = guide_legend(
+    fill = guide_legend(
       title = expression(
         atop(
           paste("Lassa-positive ", italic("Mastomys natalensis")), 
@@ -1349,6 +1352,7 @@ spill.map.house <- ggplot() +
     text = element_text(size = 20/2),
     axis.text = element_blank(),
     legend.position = "bottom",
+    legend.key.width = unit(1, "mm"),
     panel.grid = element_blank()
   )
 
@@ -1381,11 +1385,12 @@ spill.results.house <- preds %>%
   theme_minimal() +
   scale_color_manual(values = c("wheat3", "steelblue")) +
   theme(
-    text = element_text(size = 21/2),
+    text = element_text(size = 20/2),
     legend.title = element_blank(),
-    legend.text = element_text(size = 18/2),
+    legend.text = element_text(size = 9),
+    legend.key.height = unit(4, "mm"),
     legend.position = "inside",
-    legend.position.inside = c(0.7, 0.82),
+    legend.position.inside = c(0.7, 0.81),
     legend.background = element_rect(fill = "white", colour = 0)
   )
 

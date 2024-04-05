@@ -1138,10 +1138,10 @@ house.yes.no <- house.level.captures %>%
   mutate(Rra_at_site_character = ifelse(Rra_at_site == 1, "Present", "Absent")) %>%
   ggplot(aes(x = Rra_at_site_character, y = Mna_per_trap)) +
   geom_violin(fill = alpha("lightgrey", 0.3), linewidth = 0.2/2) +
-  geom_jitter(aes(color = Rra_at_site_character), height = 0, width = 0.25, size = 5/2) +
+  geom_jitter(aes(fill = Rra_at_site_character), stroke = NA, height = 0, width = 0.25, shape = 21, size = 5/2) +
   xlab(expression(paste(italic("Rattus rattus"), " status at site"))) +
   ylab(expression(atop(italic("Mastomys natalensis"), "catch per trap"))) +
-  scale_color_manual(values = c(alpha("black", 0.15), alpha("darkred", 0.15))) +
+  scale_fill_manual(values = c(alpha("black", 0.2), alpha("darkred", 0.2))) +
   theme_minimal() +
   theme(
     text = element_text(size = 20/2),
@@ -1177,11 +1177,12 @@ occ.plot <- preds %>%
   theme_minimal() +
   scale_color_manual(values = c("wheat3", "steelblue")) +
   theme(
-    text = element_text(size = 21/2),
+    text = element_text(size = 20/2),
     legend.title = element_blank(),
-    legend.text = element_text(size = 12/2),
+    legend.text = element_text(size = 9),
+    legend.key.height = unit(4, "mm"),
     legend.position = "inside",
-    legend.position.inside = c(0.7, 0.82),
+    legend.position.inside = c(0.7, 0.83),
     legend.background = element_rect(fill = "white", colour = 0)
   )
 
