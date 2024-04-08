@@ -12,17 +12,25 @@ Eskew, E.A., B.H. Bird, B.M. Ghersi, J. Bangura, A.J. Basinski, E. Amara, M.A. B
 
 - [`/data`](/data) contains data files necessary for the analysis, including:
 
+  - A clean data subdirectory ([`/clean`](/data/clean)) with:
+  
+    - Cleaned site- and visit-level rodent trapping data for Sierra Leone and Guinea ([`/combined`](/data/clean/combined))
+    
+    - Cleaned house-level rodent trapping data for Sierra Leone ([`/house`](/data/clean/house))
+    
+    - Cleaned rodent trapping data for occupancy modeling of house-level data from Sierra Leone ([`/occupancy`](/data/clean/occupancy))
+
   - Data used for data cleaning ([`/cleaning_tables`](/data/cleaning_tables))
   
   - A raw data subdirectory ([`/raw`](/data/raw)) with:
     
     - Data on _Mastomys natalensis_ catch per trap from prior studies that was used to formulate an informative prior for Bayesian modeling ([`/catch_per_trap`](/data/raw/catch_per_trap))
     
-    - Data extracted from the [McCormick et al. 1987](https://doi.org/10.1093/infdis/155.3.437) manuscript ([`/McCormick`](/data/raw/McCormick))
+    - Data manually extracted from the [McCormick et al. 1987](https://doi.org/10.1093/infdis/155.3.437) manuscript ([`/McCormick`](/data/raw/McCormick))
     
-    - GenBank accession codes associated with Lassa virus sequence data from _Mastomys natalensis_ collected in both Sierra Leone and Guinea ([`/sequencing_tables`](/data/raw/sequencing_tables))
+    - GenBank accession codes for Lassa virus sequence data from _Mastomys natalensis_ collected in both Sierra Leone and Guinea ([`/sequencing_tables`](/data/raw/sequencing_tables))
   
-  - Source data that can be used to recreate the main text figures ([`/source_data](/data/source_data))
+  - Source data that can be used to recreate the main text figures ([`/source_data`](/data/source_data))
 
 - [`/outputs`](/outputs) contains all main text figures (and a handful of others) output from the analysis scripts
 
@@ -39,3 +47,10 @@ Eskew, E.A., B.H. Bird, B.M. Ghersi, J. Bangura, A.J. Basinski, E. Amara, M.A. B
   - An alternative house-level model of _Mastomys natalensis_ count with a house-level rodent presence predictor ([`house_model_house_predictor.stan`](/stan_models/house_model_house_predictor.stan))
   
   - A visit-level zoonotic spillover risk model of Lassa-positive _Mastomys natalensis_ count with a site-level rodent presence predictor ([`spillover_risk_visit_level.stan`](/stan_models/spillover_risk_visit_level.stan))
+  
+  
+---
+
+### Notes on Reproducibility
+
+Site-, visit-, and house-level data analyses and statistical modeling for this project (using the respective analysis scripts) are reproducible given the cleaned data in the [`data/clean`](/data/clean) subdirectory. Large raster data files necessary to reproduce the supplementary environmental analyses ([`07_environmental_analyses.R](scripts/07_environmental_analyses.R) script) have not been uploaded to GitHub because of file sizes but are available on [the project's Zenodo repository](https://doi.org/10.5281/zenodo.10946459).
