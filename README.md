@@ -24,7 +24,7 @@ Eskew, E.A., B.H. Bird, B.M. Ghersi, J. Bangura, A.J. Basinski, E. Amara, M.A. B
   
   - A raw data subdirectory ([`/raw`](/data/raw)) with:
     
-    - Data on _Mastomys natalensis_ catch per trap from prior studies that was used to formulate an informative prior for Bayesian modeling ([`/catch_per_trap`](/data/raw/catch_per_trap))
+    - Data on _Mastomys natalensis_ catch per trap from prior studies that were used to formulate an informative prior for Bayesian modeling ([`/catch_per_trap`](/data/raw/catch_per_trap))
     
     - Data manually extracted from the [McCormick et al. 1987](https://doi.org/10.1093/infdis/155.3.437) manuscript ([`/McCormick`](/data/raw/McCormick))
     
@@ -53,4 +53,4 @@ Eskew, E.A., B.H. Bird, B.M. Ghersi, J. Bangura, A.J. Basinski, E. Amara, M.A. B
 
 ### Notes on Reproducibility
 
-Site-, visit-, and house-level data analyses and statistical modeling for this project (using the respective analysis scripts) are reproducible given the cleaned data in the [`data/clean`](/data/clean) subdirectory. Large raster data files necessary to reproduce the supplementary environmental analyses ([`07_environmental_analyses.R](scripts/07_environmental_analyses.R) script) have not been uploaded to GitHub because of file sizes but are available on [the project's Zenodo repository](https://doi.org/10.5281/zenodo.10946459).
+Site-, visit-, and house-level data analyses and statistical modeling for this project (using the respective analysis scripts) are reproducible given the cleaned data in the [`data/clean`](/data/clean) subdirectory. Large raster data files necessary to reproduce the supplementary environmental analyses ([`07_environmental_analyses.R`](scripts/07_environmental_analyses.R) script) have not been uploaded to GitHub because of file sizes but are available on [the project's Zenodo repository](https://doi.org/10.5281/zenodo.10946459).
