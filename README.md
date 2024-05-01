@@ -2,7 +2,7 @@
 
 This repository contains code, data, and figures that support:
 
-Eskew, E.A., B.H. Bird, B.M. Ghersi, J. Bangura, A.J. Basinski, E. Amara, M.A. Bah, M.C. Kanu, O.T. Kanu, E.G. Lavalie, V. Lungay, W. Robert, M.A. Vandi, E. Fichet-Calvet, and S.L. Nuismer. 2024. Reservoir displacement by an invasive rodent reduces Lassa virus zoonotic spillover risk.
+Eskew, E.A., B.H. Bird, B.M. Ghersi, J. Bangura, A.J. Basinski, E. Amara, M.A. Bah, M.C. Kanu, O.T. Kanu, E.G. Lavalie, V. Lungay, W. Robert, M.A. Vandi, E. Fichet-Calvet, and S.L. Nuismer. 2024. [Reservoir displacement by an invasive rodent reduces Lassa virus zoonotic spillover risk](https://doi.org/10.1038/s41467-024-47991-1). Nature Communications 15: 3589.
 
 --- 
 
